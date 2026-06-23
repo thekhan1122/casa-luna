@@ -4,10 +4,9 @@
 
 `casa-luna.js` · Casa Luna Edition **v1.0.0** (build 42)
 
-<!-- Replace with your own screenshot -->
-<img width="1500" alt="Casa Luna dashboard" src="docs/casa-luna.png![Uploading IMG_20260624_013814.jpg…]()
-<img width="1864" height="1262" alt="Screenshot_2026-06-24-01-39-00-97_3aea4af51f236e4932235fdada7d1643" src="https://github.com/user-attachments/assets/d3e3456a-f13c-4be8-95e6-c798c56ec52e" />
-" />
+<img width="1880" height="1252" alt="IMG_20260624_013814" src="https://github.com/user-attachments/assets/171972f3-3463-44eb-8e62-515a2635b5c0" />
+<img width="1864" height="1262" alt="Screenshot_2026-06-24-01-39-00-97_3aea4af51f236e4932235fdada7d1643" src="https://github.com/user-attachments/assets/6124a2d1-fed0-44f7-9b90-8256c3b47f22" />
+
 
 > **Origin:** `casa-luna` is a full expansion of [`khan-skycard`](https://github.com/thekhan1122/khan-skycard) (itself a visual overhaul of [`k-flow-card`](https://github.com/thekhan1122/k-flow-card)) and lives in its own separate repository. It keeps the same entity schema, visual editor and weather-aware sky system, but grows the single energy-flow card into a full multi-view wall dashboard. The custom element is renamed `casa-luna` to avoid a `customElements` collision when both cards are installed.
 
