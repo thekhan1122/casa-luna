@@ -4,7 +4,7 @@ A custom Home Assistant Lovelace card — a full-screen, glanceable solar / off-
 
 `casa-luna.js` renders a fixed **1500 × 1000** canvas: a live energy-flow diagram, battery state, PV production, grid (single- or 3-phase), EV charging, climate, security, lighting and system views, with an animated sky background that tracks the real sun/moon and weather.
 
-> Current element version `1.0.0`, build `42`. Forked and substantially extended from `khan-skycard.js`, with components lifted from `ha-smart-room-card.js`.
+> Current element version `1.0.0`, build `42`. Forked and substantially extended from `khan-skycard.js
 
 ---
 
@@ -250,6 +250,6 @@ For release builds: Terser minification + moderate `javascript-obfuscator` (name
 
 ## Credits & license
 
-Casa Luna Edition — by **The Khan**. Forked from `khan-skycard.js`; primitives adapted from `ha-smart-room-card.js`.
+Casa Luna Edition — by **The Khan**. Forked from `khan-skycard.js`; 
 
-License: add your chosen license here (e.g. MIT) before public distribution.
+you can reach me via email: khan.automationha@gmail.com.
