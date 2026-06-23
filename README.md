@@ -1,6 +1,6 @@
 # casa-luna Pre-release version.
 
-**Casa Luna — Home Assistant Solar / Off-Grid Wall Dashboard**
+**Casa Luna — Home Assistant Solar / Off-Grid/on-Grid/Automation Wall Dashboard**
 
 `casa-luna.js` · Casa Luna Edition **v1.0.0** (build 42)
 
