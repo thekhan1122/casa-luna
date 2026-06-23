@@ -1,4 +1,4 @@
-# casa-luna
+# casa-luna Pre-release version.
 
 **Casa Luna — Home Assistant Solar / Off-Grid Wall Dashboard**
 
@@ -420,3 +420,6 @@ Include: HA version, Casa Luna build number (in the file header / DevTools conso
 ---
 
 *Casa Luna · by The Khan · v1.0.0 (build 42)*
+
+Email: khan.automationha@gmail.com
+
