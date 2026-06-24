@@ -4,6 +4,7 @@
 
 `casa-luna.js` · Casa Luna Edition **v1.0.0** (build 42)
 
+<img width="1852" height="1262" alt="IMG_20260624_142618" src="https://github.com/user-attachments/assets/900bfb4c-a962-45f4-84a0-b1afbfd34171" />
 <img width="1880" height="1252" alt="IMG_20260624_013814" src="https://github.com/user-attachments/assets/171972f3-3463-44eb-8e62-515a2635b5c0" />
 <img width="1864" height="1262" alt="Screenshot_2026-06-24-01-39-00-97_3aea4af51f236e4932235fdada7d1643" src="https://github.com/user-attachments/assets/6124a2d1-fed0-44f7-9b90-8256c3b47f22" />
 
