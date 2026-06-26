@@ -1,4 +1,4 @@
-// v1.0.0 · build no.42
+// v1.0.0 · build no.70
 /* ════════════════════════════════════════════════════════════════════
    casa-luna.js — Casa Luna Edition · by The Khan
    Custom element: <casa-luna>  (renamed from khan-skycard to avoid
@@ -16,9 +16,438 @@
 const VERSION = '1.0.0';
 const VB_W = 1500, VB_H = 1000;
 
+/* ── i18n: card's own captions. Keyed by the English string; English is the
+   implicit baseline (any missing key falls back to English). Entity state text
+   (inverter mode, weather, on/off) is localised separately via HA's own
+   translations (hass.formatEntityState). Add a language by pasting one block. ── */
+const LANG = {
+  de: {
+    'DASHBOARD':'ÜBERSICHT', 'Home':'Startseite',
+    'ENERGY':'ENERGIE', 'Production & Flow':'Erzeugung & Fluss',
+    'SMART PLUGS':'INTELLIGENTE STECKDOSEN', 'Load & Switches':'Last & Schalter',
+    'BATTERY':'BATTERIE', 'Status & Settings':'Status & Einstell.',
+    'CLIMATE':'KLIMA', 'Temperature & Humidity':'Temp. & Luftfeuchte',
+    'SECURITY':'SICHERHEIT', 'Alarms & Cameras':'Alarme & Kameras',
+    'AUTOMATION':'AUTOMATION', 'Scenes & Routines':'Szenen & Routinen',
+    'LIGHTING':'BELEUCHTUNG', 'Lights & Ambience':'Licht & Ambiente',
+    'SYSTEM':'SYSTEM', 'System & Preferences':'System & Einstell.',
+    "TODAY'S CONSUMPTION":'VERBRAUCH HEUTE', "TODAY'S PRODUCTION":'ERZEUGUNG HEUTE',
+    'RECENT EVENTS':'LETZTE EREIGNISSE', 'INV LOAD':'WR-LAST', 'No Errors':'Keine Fehler',
+    'IDLE':'BEREIT', 'DISCHARGING':'ENTLÄDT', 'CHARGING':'LÄDT',
+    'CELL TEMP':'ZELLTEMP.', 'LOAD':'LAST', 'CELL VOLT':'ZELLSPG.', 'BMS TEMP':'BMS-TEMP.',
+    'ENDURANCE':'LAUFZEIT', 'BATT CURRENT':'BATT-STROM', 'CAPACITY':'KAPAZITÄT',
+    'GRID PHASES':'NETZPHASEN', 'INVERTER':'WECHSELRICHTER',
+    'PV1 POWER':'PV1 LEISTUNG', 'PV2 POWER':'PV2 LEISTUNG', 'PV3 POWER':'PV3 LEISTUNG', 'PV4 POWER':'PV4 LEISTUNG',
+    'PV5 POWER':'PV5 LEISTUNG', 'PV6 POWER':'PV6 LEISTUNG',
+    'PV TOTAL':'PV GESAMT', 'PV1 VOLT':'PV1 SPG.', 'PV2 VOLT':'PV2 SPG.', 'PV3 VOLT':'PV3 SPG.', 'PV4 VOLT':'PV4 SPG.',
+    'PV5 VOLT':'PV5 SPG.', 'PV6 VOLT':'PV6 SPG.',
+    'WEATHER':'WETTER', 'TEMPERATURE':'TEMPERATUR', 'WIND SPEED':'WINDGESCHW.', 'WIND DIR':'WINDRICHT.', 'SUN':'SONNE',
+    'GRID POWER':'NETZLEISTUNG', 'GRID VOLT':'NETZSPG.', 'GRID IMPORT':'NETZBEZUG', 'GRID EXPORT':'EINSPEISUNG',
+    'L1 VOLT':'L1 SPG.', 'L2 VOLT':'L2 SPG.', 'L3 VOLT':'L3 SPG.',
+    'BATTERY SOC':'BATTERIE-SOC', 'BATTERY POWER':'BATT-LEISTUNG', 'BATTERY CURRENT':'BATT-STROM', 'BATTERY VOLT':'BATT-SPG.',
+    'MIN CELL':'MIN. ZELLE', 'MAX CELL':'MAX. ZELLE', 'Batt Discharge':'Batt-Entladung',
+    'BATT2 POWER':'BATT2 LEISTUNG', 'BATT2 CURRENT':'BATT2 STROM', 'BATT2 VOLT':'BATT2 SPG.',
+    'INVERTER TEMP':'WR-TEMP.', "TODAY'S PV":'PV HEUTE', "TODAY'S LOAD":'LAST HEUTE', 'BATT CHARGE':'BATT-LADUNG',
+    'TOTAL PV':'PV GESAMT', 'INV STATE':'WR-STATUS',
+    'TOTAL IMP':'GESAMT-BEZUG', 'TOTAL EXP':'GESAMT-EINSP.',
+    'CHARGER STATE':'LADESTATUS', 'CHARGER POWER':'LADELEISTUNG', 'CHARGER CURRENT':'LADESTROM',
+    'CAR SOC':'AUTO-SOC', 'CHARGE ETA':'LADE-ETA',
+  },
+  fr: {
+    'DASHBOARD':'TABLEAU DE BORD', 'Home':'Accueil', 'ENERGY':'ÉNERGIE',
+    'Production & Flow':'Production & Flux', 'SMART PLUGS':'PRISES INTELLIGENTES', 'Load & Switches':'Charge & Interrupteurs',
+    'BATTERY':'BATTERIE', 'Status & Settings':'État & Réglages', 'CLIMATE':'CLIMAT',
+    'Temperature & Humidity':'Température & Humidité', 'SECURITY':'SÉCURITÉ', 'Alarms & Cameras':'Alarmes & Caméras',
+    'AUTOMATION':'AUTOMATISATION', 'Scenes & Routines':'Scènes & Routines', 'LIGHTING':'ÉCLAIRAGE',
+    'Lights & Ambience':'Lumières & Ambiance', 'SYSTEM':'SYSTÈME', 'System & Preferences':'Système & Préférences',
+    "TODAY'S CONSUMPTION":'CONSOMMATION DU JOUR', "TODAY'S PRODUCTION":'PRODUCTION DU JOUR', 'RECENT EVENTS':'ÉVÉNEMENTS RÉCENTS',
+    'INV LOAD':'CHARGE ONDUL.', 'No Errors':'Aucune erreur', 'IDLE':'INACTIF',
+    'DISCHARGING':'DÉCHARGE', 'CHARGING':'CHARGE', 'CELL TEMP':'TEMP. CELLULE',
+    'LOAD':'CHARGE', 'CELL VOLT':'TENS. CELLULE', 'BMS TEMP':'TEMP. BMS',
+    'ENDURANCE':'AUTONOMIE', 'BATT CURRENT':'COURANT BATT.', 'CAPACITY':'CAPACITÉ',
+    'GRID PHASES':'PHASES RÉSEAU', 'INVERTER':'ONDULEUR', 'PV1 POWER':'PUISSANCE PV1',
+    'PV2 POWER':'PUISSANCE PV2', 'PV3 POWER':'PUISSANCE PV3', 'PV4 POWER':'PUISSANCE PV4',
+    'PV5 POWER':'PUISSANCE PV5', 'PV6 POWER':'PUISSANCE PV6', 'PV TOTAL':'PV TOTAL',
+    'PV1 VOLT':'TENSION PV1', 'PV2 VOLT':'TENSION PV2', 'PV3 VOLT':'TENSION PV3',
+    'PV4 VOLT':'TENSION PV4', 'PV5 VOLT':'TENSION PV5', 'PV6 VOLT':'TENSION PV6',
+    'WEATHER':'MÉTÉO', 'TEMPERATURE':'TEMPÉRATURE', 'WIND SPEED':'VITESSE VENT',
+    'WIND DIR':'DIR. VENT', 'SUN':'SOLEIL', 'GRID POWER':'PUISSANCE RÉSEAU',
+    'GRID VOLT':'TENSION RÉSEAU', 'GRID IMPORT':'IMPORT RÉSEAU', 'GRID EXPORT':'EXPORT RÉSEAU',
+    'L1 VOLT':'TENSION L1', 'L2 VOLT':'TENSION L2', 'L3 VOLT':'TENSION L3',
+    'BATTERY SOC':'SOC BATTERIE', 'BATTERY POWER':'PUISSANCE BATT.', 'BATTERY CURRENT':'COURANT BATT.',
+    'BATTERY VOLT':'TENSION BATT.', 'MIN CELL':'CELLULE MIN', 'MAX CELL':'CELLULE MAX',
+    'Batt Discharge':'Décharge Batt.', 'BATT2 POWER':'PUISSANCE BATT2', 'BATT2 CURRENT':'COURANT BATT2',
+    'BATT2 VOLT':'TENSION BATT2', 'INVERTER TEMP':'TEMP. ONDULEUR', "TODAY'S PV":'PV DU JOUR',
+    "TODAY'S LOAD":'CHARGE DU JOUR', 'BATT CHARGE':'CHARGE BATT.', 'TOTAL PV':'PV TOTAL',
+    'INV STATE':'ÉTAT ONDUL.', 'TOTAL IMP':'IMPORT TOTAL', 'TOTAL EXP':'EXPORT TOTAL',
+    'CHARGER STATE':'ÉTAT CHARGEUR', 'CHARGER POWER':'PUISSANCE CHARGEUR', 'CHARGER CURRENT':'COURANT CHARGEUR',
+    'CAR SOC':'SOC VÉHICULE', 'CHARGE ETA':'ETA CHARGE',
+  },
+  es: {
+    'DASHBOARD':'PANEL', 'Home':'Inicio', 'ENERGY':'ENERGÍA',
+    'Production & Flow':'Producción y Flujo', 'SMART PLUGS':'ENCHUFES INTELIGENTES', 'Load & Switches':'Carga e Interruptores',
+    'BATTERY':'BATERÍA', 'Status & Settings':'Estado y Ajustes', 'CLIMATE':'CLIMA',
+    'Temperature & Humidity':'Temperatura y Humedad', 'SECURITY':'SEGURIDAD', 'Alarms & Cameras':'Alarmas y Cámaras',
+    'AUTOMATION':'AUTOMATIZACIÓN', 'Scenes & Routines':'Escenas y Rutinas', 'LIGHTING':'ILUMINACIÓN',
+    'Lights & Ambience':'Luces y Ambiente', 'SYSTEM':'SISTEMA', 'System & Preferences':'Sistema y Preferencias',
+    "TODAY'S CONSUMPTION":'CONSUMO DE HOY', "TODAY'S PRODUCTION":'PRODUCCIÓN DE HOY', 'RECENT EVENTS':'EVENTOS RECIENTES',
+    'INV LOAD':'CARGA INV.', 'No Errors':'Sin errores', 'IDLE':'INACTIVO',
+    'DISCHARGING':'DESCARGANDO', 'CHARGING':'CARGANDO', 'CELL TEMP':'TEMP. CELDA',
+    'LOAD':'CARGA', 'CELL VOLT':'VOLT. CELDA', 'BMS TEMP':'TEMP. BMS',
+    'ENDURANCE':'AUTONOMÍA', 'BATT CURRENT':'CORRIENTE BAT.', 'CAPACITY':'CAPACIDAD',
+    'GRID PHASES':'FASES RED', 'INVERTER':'INVERSOR', 'PV1 POWER':'POTENCIA PV1',
+    'PV2 POWER':'POTENCIA PV2', 'PV3 POWER':'POTENCIA PV3', 'PV4 POWER':'POTENCIA PV4',
+    'PV5 POWER':'POTENCIA PV5', 'PV6 POWER':'POTENCIA PV6', 'PV TOTAL':'PV TOTAL',
+    'PV1 VOLT':'VOLTAJE PV1', 'PV2 VOLT':'VOLTAJE PV2', 'PV3 VOLT':'VOLTAJE PV3',
+    'PV4 VOLT':'VOLTAJE PV4', 'PV5 VOLT':'VOLTAJE PV5', 'PV6 VOLT':'VOLTAJE PV6',
+    'WEATHER':'CLIMA', 'TEMPERATURE':'TEMPERATURA', 'WIND SPEED':'VEL. VIENTO',
+    'WIND DIR':'DIR. VIENTO', 'SUN':'SOL', 'GRID POWER':'POTENCIA RED',
+    'GRID VOLT':'VOLTAJE RED', 'GRID IMPORT':'IMPORT. RED', 'GRID EXPORT':'EXPORT. RED',
+    'L1 VOLT':'VOLTAJE L1', 'L2 VOLT':'VOLTAJE L2', 'L3 VOLT':'VOLTAJE L3',
+    'BATTERY SOC':'SOC BATERÍA', 'BATTERY POWER':'POTENCIA BAT.', 'BATTERY CURRENT':'CORRIENTE BAT.',
+    'BATTERY VOLT':'VOLTAJE BAT.', 'MIN CELL':'CELDA MÍN', 'MAX CELL':'CELDA MÁX',
+    'Batt Discharge':'Descarga Bat.', 'BATT2 POWER':'POTENCIA BAT2', 'BATT2 CURRENT':'CORRIENTE BAT2',
+    'BATT2 VOLT':'VOLTAJE BAT2', 'INVERTER TEMP':'TEMP. INVERSOR', "TODAY'S PV":'PV DE HOY',
+    "TODAY'S LOAD":'CARGA DE HOY', 'BATT CHARGE':'CARGA BAT.', 'TOTAL PV':'PV TOTAL',
+    'INV STATE':'ESTADO INV.', 'TOTAL IMP':'IMPORT. TOTAL', 'TOTAL EXP':'EXPORT. TOTAL',
+    'CHARGER STATE':'ESTADO CARGADOR', 'CHARGER POWER':'POTENCIA CARGADOR', 'CHARGER CURRENT':'CORRIENTE CARGADOR',
+    'CAR SOC':'SOC VEHÍCULO', 'CHARGE ETA':'ETA CARGA',
+  },
+  it: {
+    'DASHBOARD':'PANNELLO', 'Home':'Home', 'ENERGY':'ENERGIA',
+    'Production & Flow':'Produzione e Flusso', 'SMART PLUGS':'PRESE INTELLIGENTI', 'Load & Switches':'Carico e Interruttori',
+    'BATTERY':'BATTERIA', 'Status & Settings':'Stato e Impostazioni', 'CLIMATE':'CLIMA',
+    'Temperature & Humidity':'Temperatura e Umidità', 'SECURITY':'SICUREZZA', 'Alarms & Cameras':'Allarmi e Telecamere',
+    'AUTOMATION':'AUTOMAZIONE', 'Scenes & Routines':'Scene e Routine', 'LIGHTING':'ILLUMINAZIONE',
+    'Lights & Ambience':'Luci e Ambiente', 'SYSTEM':'SISTEMA', 'System & Preferences':'Sistema e Preferenze',
+    "TODAY'S CONSUMPTION":'CONSUMO DI OGGI', "TODAY'S PRODUCTION":'PRODUZIONE DI OGGI', 'RECENT EVENTS':'EVENTI RECENTI',
+    'INV LOAD':'CARICO INV.', 'No Errors':'Nessun errore', 'IDLE':'INATTIVO',
+    'DISCHARGING':'SCARICA', 'CHARGING':'CARICA', 'CELL TEMP':'TEMP. CELLA',
+    'LOAD':'CARICO', 'CELL VOLT':'TENS. CELLA', 'BMS TEMP':'TEMP. BMS',
+    'ENDURANCE':'AUTONOMIA', 'BATT CURRENT':'CORRENTE BATT.', 'CAPACITY':'CAPACITÀ',
+    'GRID PHASES':'FASI RETE', 'INVERTER':'INVERTER', 'PV1 POWER':'POTENZA PV1',
+    'PV2 POWER':'POTENZA PV2', 'PV3 POWER':'POTENZA PV3', 'PV4 POWER':'POTENZA PV4',
+    'PV5 POWER':'POTENZA PV5', 'PV6 POWER':'POTENZA PV6', 'PV TOTAL':'PV TOTALE',
+    'PV1 VOLT':'TENSIONE PV1', 'PV2 VOLT':'TENSIONE PV2', 'PV3 VOLT':'TENSIONE PV3',
+    'PV4 VOLT':'TENSIONE PV4', 'PV5 VOLT':'TENSIONE PV5', 'PV6 VOLT':'TENSIONE PV6',
+    'WEATHER':'METEO', 'TEMPERATURE':'TEMPERATURA', 'WIND SPEED':'VEL. VENTO',
+    'WIND DIR':'DIR. VENTO', 'SUN':'SOLE', 'GRID POWER':'POTENZA RETE',
+    'GRID VOLT':'TENSIONE RETE', 'GRID IMPORT':'IMPORT RETE', 'GRID EXPORT':'EXPORT RETE',
+    'L1 VOLT':'TENSIONE L1', 'L2 VOLT':'TENSIONE L2', 'L3 VOLT':'TENSIONE L3',
+    'BATTERY SOC':'SOC BATTERIA', 'BATTERY POWER':'POTENZA BATT.', 'BATTERY CURRENT':'CORRENTE BATT.',
+    'BATTERY VOLT':'TENSIONE BATT.', 'MIN CELL':'CELLA MIN', 'MAX CELL':'CELLA MAX',
+    'Batt Discharge':'Scarica Batt.', 'BATT2 POWER':'POTENZA BATT2', 'BATT2 CURRENT':'CORRENTE BATT2',
+    'BATT2 VOLT':'TENSIONE BATT2', 'INVERTER TEMP':'TEMP. INVERTER', "TODAY'S PV":'PV DI OGGI',
+    "TODAY'S LOAD":'CARICO DI OGGI', 'BATT CHARGE':'CARICA BATT.', 'TOTAL PV':'PV TOTALE',
+    'INV STATE':'STATO INV.', 'TOTAL IMP':'IMPORT TOTALE', 'TOTAL EXP':'EXPORT TOTALE',
+    'CHARGER STATE':'STATO CARICATORE', 'CHARGER POWER':'POTENZA CARICATORE', 'CHARGER CURRENT':'CORRENTE CARICATORE',
+    'CAR SOC':'SOC VEICOLO', 'CHARGE ETA':'ETA CARICA',
+  },
+  pt: {
+    'DASHBOARD':'PAINEL', 'Home':'Início', 'ENERGY':'ENERGIA',
+    'Production & Flow':'Produção e Fluxo', 'SMART PLUGS':'TOMADAS INTELIGENTES', 'Load & Switches':'Carga e Interruptores',
+    'BATTERY':'BATERIA', 'Status & Settings':'Estado e Definições', 'CLIMATE':'CLIMA',
+    'Temperature & Humidity':'Temperatura e Humidade', 'SECURITY':'SEGURANÇA', 'Alarms & Cameras':'Alarmes e Câmaras',
+    'AUTOMATION':'AUTOMAÇÃO', 'Scenes & Routines':'Cenas e Rotinas', 'LIGHTING':'ILUMINAÇÃO',
+    'Lights & Ambience':'Luzes e Ambiente', 'SYSTEM':'SISTEMA', 'System & Preferences':'Sistema e Preferências',
+    "TODAY'S CONSUMPTION":'CONSUMO DE HOJE', "TODAY'S PRODUCTION":'PRODUÇÃO DE HOJE', 'RECENT EVENTS':'EVENTOS RECENTES',
+    'INV LOAD':'CARGA INV.', 'No Errors':'Sem erros', 'IDLE':'INATIVO',
+    'DISCHARGING':'A DESCARREGAR', 'CHARGING':'A CARREGAR', 'CELL TEMP':'TEMP. CÉLULA',
+    'LOAD':'CARGA', 'CELL VOLT':'TENS. CÉLULA', 'BMS TEMP':'TEMP. BMS',
+    'ENDURANCE':'AUTONOMIA', 'BATT CURRENT':'CORRENTE BAT.', 'CAPACITY':'CAPACIDADE',
+    'GRID PHASES':'FASES REDE', 'INVERTER':'INVERSOR', 'PV1 POWER':'POTÊNCIA PV1',
+    'PV2 POWER':'POTÊNCIA PV2', 'PV3 POWER':'POTÊNCIA PV3', 'PV4 POWER':'POTÊNCIA PV4',
+    'PV5 POWER':'POTÊNCIA PV5', 'PV6 POWER':'POTÊNCIA PV6', 'PV TOTAL':'PV TOTAL',
+    'PV1 VOLT':'TENSÃO PV1', 'PV2 VOLT':'TENSÃO PV2', 'PV3 VOLT':'TENSÃO PV3',
+    'PV4 VOLT':'TENSÃO PV4', 'PV5 VOLT':'TENSÃO PV5', 'PV6 VOLT':'TENSÃO PV6',
+    'WEATHER':'METEOROLOGIA', 'TEMPERATURE':'TEMPERATURA', 'WIND SPEED':'VEL. VENTO',
+    'WIND DIR':'DIR. VENTO', 'SUN':'SOL', 'GRID POWER':'POTÊNCIA REDE',
+    'GRID VOLT':'TENSÃO REDE', 'GRID IMPORT':'IMPORT. REDE', 'GRID EXPORT':'EXPORT. REDE',
+    'L1 VOLT':'TENSÃO L1', 'L2 VOLT':'TENSÃO L2', 'L3 VOLT':'TENSÃO L3',
+    'BATTERY SOC':'SOC BATERIA', 'BATTERY POWER':'POTÊNCIA BAT.', 'BATTERY CURRENT':'CORRENTE BAT.',
+    'BATTERY VOLT':'TENSÃO BAT.', 'MIN CELL':'CÉLULA MÍN', 'MAX CELL':'CÉLULA MÁX',
+    'Batt Discharge':'Descarga Bat.', 'BATT2 POWER':'POTÊNCIA BAT2', 'BATT2 CURRENT':'CORRENTE BAT2',
+    'BATT2 VOLT':'TENSÃO BAT2', 'INVERTER TEMP':'TEMP. INVERSOR', "TODAY'S PV":'PV DE HOJE',
+    "TODAY'S LOAD":'CARGA DE HOJE', 'BATT CHARGE':'CARGA BAT.', 'TOTAL PV':'PV TOTAL',
+    'INV STATE':'ESTADO INV.', 'TOTAL IMP':'IMPORT. TOTAL', 'TOTAL EXP':'EXPORT. TOTAL',
+    'CHARGER STATE':'ESTADO CARREGADOR', 'CHARGER POWER':'POTÊNCIA CARREGADOR', 'CHARGER CURRENT':'CORRENTE CARREGADOR',
+    'CAR SOC':'SOC VEÍCULO', 'CHARGE ETA':'ETA CARGA',
+  },
+  nl: {
+    'DASHBOARD':'DASHBOARD', 'Home':'Start', 'ENERGY':'ENERGIE',
+    'Production & Flow':'Productie & Stroom', 'SMART PLUGS':'SLIMME STEKKERS', 'Load & Switches':'Belasting & Schakelaars',
+    'BATTERY':'ACCU', 'Status & Settings':'Status & Instellingen', 'CLIMATE':'KLIMAAT',
+    'Temperature & Humidity':'Temperatuur & Vochtigheid', 'SECURITY':'BEVEILIGING', 'Alarms & Cameras':"Alarmen & Camera's",
+    'AUTOMATION':'AUTOMATISERING', 'Scenes & Routines':'Scènes & Routines', 'LIGHTING':'VERLICHTING',
+    'Lights & Ambience':'Licht & Sfeer', 'SYSTEM':'SYSTEEM', 'System & Preferences':'Systeem & Voorkeuren',
+    "TODAY'S CONSUMPTION":'VERBRUIK VANDAAG', "TODAY'S PRODUCTION":'PRODUCTIE VANDAAG', 'RECENT EVENTS':'RECENTE GEBEURTENISSEN',
+    'INV LOAD':'INV. BELASTING', 'No Errors':'Geen fouten', 'IDLE':'INACTIEF',
+    'DISCHARGING':'ONTLADEN', 'CHARGING':'OPLADEN', 'CELL TEMP':'CELTEMP.',
+    'LOAD':'BELASTING', 'CELL VOLT':'CELSPANNING', 'BMS TEMP':'BMS-TEMP.',
+    'ENDURANCE':'DUUR', 'BATT CURRENT':'ACCUSTROOM', 'CAPACITY':'CAPACITEIT',
+    'GRID PHASES':'NETFASEN', 'INVERTER':'OMVORMER', 'PV1 POWER':'PV1 VERMOGEN',
+    'PV2 POWER':'PV2 VERMOGEN', 'PV3 POWER':'PV3 VERMOGEN', 'PV4 POWER':'PV4 VERMOGEN',
+    'PV5 POWER':'PV5 VERMOGEN', 'PV6 POWER':'PV6 VERMOGEN', 'PV TOTAL':'PV TOTAAL',
+    'PV1 VOLT':'PV1 SPANNING', 'PV2 VOLT':'PV2 SPANNING', 'PV3 VOLT':'PV3 SPANNING',
+    'PV4 VOLT':'PV4 SPANNING', 'PV5 VOLT':'PV5 SPANNING', 'PV6 VOLT':'PV6 SPANNING',
+    'WEATHER':'WEER', 'TEMPERATURE':'TEMPERATUUR', 'WIND SPEED':'WINDSNELHEID',
+    'WIND DIR':'WINDRICHTING', 'SUN':'ZON', 'GRID POWER':'NETVERMOGEN',
+    'GRID VOLT':'NETSPANNING', 'GRID IMPORT':'NETAFNAME', 'GRID EXPORT':'NETINVOEDING',
+    'L1 VOLT':'L1 SPANNING', 'L2 VOLT':'L2 SPANNING', 'L3 VOLT':'L3 SPANNING',
+    'BATTERY SOC':'ACCU SOC', 'BATTERY POWER':'ACCUVERMOGEN', 'BATTERY CURRENT':'ACCUSTROOM',
+    'BATTERY VOLT':'ACCUSPANNING', 'MIN CELL':'MIN. CEL', 'MAX CELL':'MAX. CEL',
+    'Batt Discharge':'Accu Ontlading', 'BATT2 POWER':'ACCU2 VERMOGEN', 'BATT2 CURRENT':'ACCU2 STROOM',
+    'BATT2 VOLT':'ACCU2 SPANNING', 'INVERTER TEMP':'OMVORMER TEMP.', "TODAY'S PV":'PV VANDAAG',
+    "TODAY'S LOAD":'BELASTING VANDAAG', 'BATT CHARGE':'ACCU LADEN', 'TOTAL PV':'PV TOTAAL',
+    'INV STATE':'OMVORMERSTATUS', 'TOTAL IMP':'TOTALE AFNAME', 'TOTAL EXP':'TOTALE INVOEDING',
+    'CHARGER STATE':'LADERSTATUS', 'CHARGER POWER':'LAADVERMOGEN', 'CHARGER CURRENT':'LAADSTROOM',
+    'CAR SOC':'AUTO SOC', 'CHARGE ETA':'LAAD-ETA',
+  },
+  pl: {
+    'DASHBOARD':'PULPIT', 'Home':'Strona główna', 'ENERGY':'ENERGIA',
+    'Production & Flow':'Produkcja i Przepływ', 'SMART PLUGS':'INTELIGENTNE GNIAZDA', 'Load & Switches':'Obciążenie i Przełączniki',
+    'BATTERY':'AKUMULATOR', 'Status & Settings':'Stan i Ustawienia', 'CLIMATE':'KLIMAT',
+    'Temperature & Humidity':'Temperatura i Wilgotność', 'SECURITY':'BEZPIECZEŃSTWO', 'Alarms & Cameras':'Alarmy i Kamery',
+    'AUTOMATION':'AUTOMATYKA', 'Scenes & Routines':'Scenariusze i Rutyny', 'LIGHTING':'OŚWIETLENIE',
+    'Lights & Ambience':'Światła i Nastrój', 'SYSTEM':'SYSTEM', 'System & Preferences':'System i Preferencje',
+    "TODAY'S CONSUMPTION":'ZUŻYCIE DZIŚ', "TODAY'S PRODUCTION":'PRODUKCJA DZIŚ', 'RECENT EVENTS':'OSTATNIE ZDARZENIA',
+    'INV LOAD':'OBC. INWERTERA', 'No Errors':'Brak błędów', 'IDLE':'BEZCZYNNY',
+    'DISCHARGING':'ROZŁADOWANIE', 'CHARGING':'ŁADOWANIE', 'CELL TEMP':'TEMP. OGNIWA',
+    'LOAD':'OBCIĄŻENIE', 'CELL VOLT':'NAPIĘCIE OGNIWA', 'BMS TEMP':'TEMP. BMS',
+    'ENDURANCE':'CZAS PRACY', 'BATT CURRENT':'PRĄD AKUM.', 'CAPACITY':'POJEMNOŚĆ',
+    'GRID PHASES':'FAZY SIECI', 'INVERTER':'INWERTER', 'PV1 POWER':'MOC PV1',
+    'PV2 POWER':'MOC PV2', 'PV3 POWER':'MOC PV3', 'PV4 POWER':'MOC PV4',
+    'PV5 POWER':'MOC PV5', 'PV6 POWER':'MOC PV6', 'PV TOTAL':'PV CAŁKOWITE',
+    'PV1 VOLT':'NAPIĘCIE PV1', 'PV2 VOLT':'NAPIĘCIE PV2', 'PV3 VOLT':'NAPIĘCIE PV3',
+    'PV4 VOLT':'NAPIĘCIE PV4', 'PV5 VOLT':'NAPIĘCIE PV5', 'PV6 VOLT':'NAPIĘCIE PV6',
+    'WEATHER':'POGODA', 'TEMPERATURE':'TEMPERATURA', 'WIND SPEED':'PRĘDK. WIATRU',
+    'WIND DIR':'KIER. WIATRU', 'SUN':'SŁOŃCE', 'GRID POWER':'MOC SIECI',
+    'GRID VOLT':'NAPIĘCIE SIECI', 'GRID IMPORT':'IMPORT SIECI', 'GRID EXPORT':'EKSPORT SIECI',
+    'L1 VOLT':'NAPIĘCIE L1', 'L2 VOLT':'NAPIĘCIE L2', 'L3 VOLT':'NAPIĘCIE L3',
+    'BATTERY SOC':'SOC AKUM.', 'BATTERY POWER':'MOC AKUM.', 'BATTERY CURRENT':'PRĄD AKUM.',
+    'BATTERY VOLT':'NAPIĘCIE AKUM.', 'MIN CELL':'MIN. OGNIWO', 'MAX CELL':'MAX. OGNIWO',
+    'Batt Discharge':'Rozładowanie Akum.', 'BATT2 POWER':'MOC AKUM2', 'BATT2 CURRENT':'PRĄD AKUM2',
+    'BATT2 VOLT':'NAPIĘCIE AKUM2', 'INVERTER TEMP':'TEMP. INWERTERA', "TODAY'S PV":'PV DZIŚ',
+    "TODAY'S LOAD":'OBCIĄŻENIE DZIŚ', 'BATT CHARGE':'ŁADOWANIE AKUM.', 'TOTAL PV':'PV CAŁKOWITE',
+    'INV STATE':'STAN INWERTERA', 'TOTAL IMP':'IMPORT CAŁKOWITY', 'TOTAL EXP':'EKSPORT CAŁKOWITY',
+    'CHARGER STATE':'STAN ŁADOWARKI', 'CHARGER POWER':'MOC ŁADOWARKI', 'CHARGER CURRENT':'PRĄD ŁADOWARKI',
+    'CAR SOC':'SOC POJAZDU', 'CHARGE ETA':'ETA ŁADOWANIA',
+  },
+  sv: {
+    'DASHBOARD':'ÖVERSIKT', 'Home':'Hem', 'ENERGY':'ENERGI',
+    'Production & Flow':'Produktion & Flöde', 'SMART PLUGS':'SMARTA UTTAG', 'Load & Switches':'Belastning & Strömbrytare',
+    'BATTERY':'BATTERI', 'Status & Settings':'Status & Inställningar', 'CLIMATE':'KLIMAT',
+    'Temperature & Humidity':'Temperatur & Luftfuktighet', 'SECURITY':'SÄKERHET', 'Alarms & Cameras':'Larm & Kameror',
+    'AUTOMATION':'AUTOMATION', 'Scenes & Routines':'Scener & Rutiner', 'LIGHTING':'BELYSNING',
+    'Lights & Ambience':'Ljus & Atmosfär', 'SYSTEM':'SYSTEM', 'System & Preferences':'System & Inställningar',
+    "TODAY'S CONSUMPTION":'FÖRBRUKNING IDAG', "TODAY'S PRODUCTION":'PRODUKTION IDAG', 'RECENT EVENTS':'SENASTE HÄNDELSER',
+    'INV LOAD':'VÄXELR. LAST', 'No Errors':'Inga fel', 'IDLE':'VILOLÄGE',
+    'DISCHARGING':'URLADDNING', 'CHARGING':'LADDNING', 'CELL TEMP':'CELLTEMP.',
+    'LOAD':'LAST', 'CELL VOLT':'CELLSPÄNNING', 'BMS TEMP':'BMS-TEMP.',
+    'ENDURANCE':'UTHÅLLIGHET', 'BATT CURRENT':'BATTERISTRÖM', 'CAPACITY':'KAPACITET',
+    'GRID PHASES':'NÄTFASER', 'INVERTER':'VÄXELRIKTARE', 'PV1 POWER':'PV1 EFFEKT',
+    'PV2 POWER':'PV2 EFFEKT', 'PV3 POWER':'PV3 EFFEKT', 'PV4 POWER':'PV4 EFFEKT',
+    'PV5 POWER':'PV5 EFFEKT', 'PV6 POWER':'PV6 EFFEKT', 'PV TOTAL':'PV TOTALT',
+    'PV1 VOLT':'PV1 SPÄNNING', 'PV2 VOLT':'PV2 SPÄNNING', 'PV3 VOLT':'PV3 SPÄNNING',
+    'PV4 VOLT':'PV4 SPÄNNING', 'PV5 VOLT':'PV5 SPÄNNING', 'PV6 VOLT':'PV6 SPÄNNING',
+    'WEATHER':'VÄDER', 'TEMPERATURE':'TEMPERATUR', 'WIND SPEED':'VINDHASTIGHET',
+    'WIND DIR':'VINDRIKTNING', 'SUN':'SOL', 'GRID POWER':'NÄTEFFEKT',
+    'GRID VOLT':'NÄTSPÄNNING', 'GRID IMPORT':'NÄTIMPORT', 'GRID EXPORT':'NÄTEXPORT',
+    'L1 VOLT':'L1 SPÄNNING', 'L2 VOLT':'L2 SPÄNNING', 'L3 VOLT':'L3 SPÄNNING',
+    'BATTERY SOC':'BATTERI SOC', 'BATTERY POWER':'BATTERIEFFEKT', 'BATTERY CURRENT':'BATTERISTRÖM',
+    'BATTERY VOLT':'BATTERISPÄNNING', 'MIN CELL':'MIN. CELL', 'MAX CELL':'MAX. CELL',
+    'Batt Discharge':'Batteriurladdning', 'BATT2 POWER':'BATTERI2 EFFEKT', 'BATT2 CURRENT':'BATTERI2 STRÖM',
+    'BATT2 VOLT':'BATTERI2 SPÄNNING', 'INVERTER TEMP':'VÄXELR. TEMP.', "TODAY'S PV":'PV IDAG',
+    "TODAY'S LOAD":'LAST IDAG', 'BATT CHARGE':'BATTERILADDNING', 'TOTAL PV':'PV TOTALT',
+    'INV STATE':'VÄXELR. STATUS', 'TOTAL IMP':'TOTAL IMPORT', 'TOTAL EXP':'TOTAL EXPORT',
+    'CHARGER STATE':'LADDARSTATUS', 'CHARGER POWER':'LADDAREFFEKT', 'CHARGER CURRENT':'LADDARSTRÖM',
+    'CAR SOC':'BIL SOC', 'CHARGE ETA':'LADDNING ETA',
+  },
+  nb: {
+    'DASHBOARD':'OVERSIKT', 'Home':'Hjem', 'ENERGY':'ENERGI',
+    'Production & Flow':'Produksjon & Flyt', 'SMART PLUGS':'SMARTE STIKKONTAKTER', 'Load & Switches':'Last & Brytere',
+    'BATTERY':'BATTERI', 'Status & Settings':'Status & Innstillinger', 'CLIMATE':'KLIMA',
+    'Temperature & Humidity':'Temperatur & Luftfuktighet', 'SECURITY':'SIKKERHET', 'Alarms & Cameras':'Alarmer & Kameraer',
+    'AUTOMATION':'AUTOMASJON', 'Scenes & Routines':'Scener & Rutiner', 'LIGHTING':'BELYSNING',
+    'Lights & Ambience':'Lys & Stemning', 'SYSTEM':'SYSTEM', 'System & Preferences':'System & Innstillinger',
+    "TODAY'S CONSUMPTION":'FORBRUK I DAG', "TODAY'S PRODUCTION":'PRODUKSJON I DAG', 'RECENT EVENTS':'NYLIGE HENDELSER',
+    'INV LOAD':'INV. LAST', 'No Errors':'Ingen feil', 'IDLE':'INAKTIV',
+    'DISCHARGING':'UTLADING', 'CHARGING':'LADING', 'CELL TEMP':'CELLETEMP.',
+    'LOAD':'LAST', 'CELL VOLT':'CELLESPENNING', 'BMS TEMP':'BMS-TEMP.',
+    'ENDURANCE':'VARIGHET', 'BATT CURRENT':'BATTERISTRØM', 'CAPACITY':'KAPASITET',
+    'GRID PHASES':'NETTFASER', 'INVERTER':'INVERTER', 'PV1 POWER':'PV1 EFFEKT',
+    'PV2 POWER':'PV2 EFFEKT', 'PV3 POWER':'PV3 EFFEKT', 'PV4 POWER':'PV4 EFFEKT',
+    'PV5 POWER':'PV5 EFFEKT', 'PV6 POWER':'PV6 EFFEKT', 'PV TOTAL':'PV TOTALT',
+    'PV1 VOLT':'PV1 SPENNING', 'PV2 VOLT':'PV2 SPENNING', 'PV3 VOLT':'PV3 SPENNING',
+    'PV4 VOLT':'PV4 SPENNING', 'PV5 VOLT':'PV5 SPENNING', 'PV6 VOLT':'PV6 SPENNING',
+    'WEATHER':'VÆR', 'TEMPERATURE':'TEMPERATUR', 'WIND SPEED':'VINDHASTIGHET',
+    'WIND DIR':'VINDRETNING', 'SUN':'SOL', 'GRID POWER':'NETTEFFEKT',
+    'GRID VOLT':'NETTSPENNING', 'GRID IMPORT':'NETTIMPORT', 'GRID EXPORT':'NETTEKSPORT',
+    'L1 VOLT':'L1 SPENNING', 'L2 VOLT':'L2 SPENNING', 'L3 VOLT':'L3 SPENNING',
+    'BATTERY SOC':'BATTERI SOC', 'BATTERY POWER':'BATTERIEFFEKT', 'BATTERY CURRENT':'BATTERISTRØM',
+    'BATTERY VOLT':'BATTERISPENNING', 'MIN CELL':'MIN. CELLE', 'MAX CELL':'MAX. CELLE',
+    'Batt Discharge':'Batteriutlading', 'BATT2 POWER':'BATTERI2 EFFEKT', 'BATT2 CURRENT':'BATTERI2 STRØM',
+    'BATT2 VOLT':'BATTERI2 SPENNING', 'INVERTER TEMP':'INVERTER TEMP.', "TODAY'S PV":'PV I DAG',
+    "TODAY'S LOAD":'LAST I DAG', 'BATT CHARGE':'BATTERILADING', 'TOTAL PV':'PV TOTALT',
+    'INV STATE':'INVERTERSTATUS', 'TOTAL IMP':'TOTAL IMPORT', 'TOTAL EXP':'TOTAL EKSPORT',
+    'CHARGER STATE':'LADERSTATUS', 'CHARGER POWER':'LADEEFFEKT', 'CHARGER CURRENT':'LADESTRØM',
+    'CAR SOC':'BIL SOC', 'CHARGE ETA':'LADING ETA',
+  },
+  da: {
+    'DASHBOARD':'OVERSIGT', 'Home':'Hjem', 'ENERGY':'ENERGI',
+    'Production & Flow':'Produktion & Flow', 'SMART PLUGS':'SMARTE STIKKONTAKTER', 'Load & Switches':'Belastning & Kontakter',
+    'BATTERY':'BATTERI', 'Status & Settings':'Status & Indstillinger', 'CLIMATE':'KLIMA',
+    'Temperature & Humidity':'Temperatur & Luftfugtighed', 'SECURITY':'SIKKERHED', 'Alarms & Cameras':'Alarmer & Kameraer',
+    'AUTOMATION':'AUTOMATISERING', 'Scenes & Routines':'Scener & Rutiner', 'LIGHTING':'BELYSNING',
+    'Lights & Ambience':'Lys & Stemning', 'SYSTEM':'SYSTEM', 'System & Preferences':'System & Indstillinger',
+    "TODAY'S CONSUMPTION":'FORBRUG I DAG', "TODAY'S PRODUCTION":'PRODUKTION I DAG', 'RECENT EVENTS':'SENESTE HÆNDELSER',
+    'INV LOAD':'INV. BELASTN.', 'No Errors':'Ingen fejl', 'IDLE':'INAKTIV',
+    'DISCHARGING':'AFLADNING', 'CHARGING':'OPLADNING', 'CELL TEMP':'CELLETEMP.',
+    'LOAD':'BELASTNING', 'CELL VOLT':'CELLESPÆNDING', 'BMS TEMP':'BMS-TEMP.',
+    'ENDURANCE':'VARIGHED', 'BATT CURRENT':'BATTERISTRØM', 'CAPACITY':'KAPACITET',
+    'GRID PHASES':'NETFASER', 'INVERTER':'INVERTER', 'PV1 POWER':'PV1 EFFEKT',
+    'PV2 POWER':'PV2 EFFEKT', 'PV3 POWER':'PV3 EFFEKT', 'PV4 POWER':'PV4 EFFEKT',
+    'PV5 POWER':'PV5 EFFEKT', 'PV6 POWER':'PV6 EFFEKT', 'PV TOTAL':'PV TOTAL',
+    'PV1 VOLT':'PV1 SPÆNDING', 'PV2 VOLT':'PV2 SPÆNDING', 'PV3 VOLT':'PV3 SPÆNDING',
+    'PV4 VOLT':'PV4 SPÆNDING', 'PV5 VOLT':'PV5 SPÆNDING', 'PV6 VOLT':'PV6 SPÆNDING',
+    'WEATHER':'VEJR', 'TEMPERATURE':'TEMPERATUR', 'WIND SPEED':'VINDHASTIGHED',
+    'WIND DIR':'VINDRETNING', 'SUN':'SOL', 'GRID POWER':'NETEFFEKT',
+    'GRID VOLT':'NETSPÆNDING', 'GRID IMPORT':'NETIMPORT', 'GRID EXPORT':'NETEKSPORT',
+    'L1 VOLT':'L1 SPÆNDING', 'L2 VOLT':'L2 SPÆNDING', 'L3 VOLT':'L3 SPÆNDING',
+    'BATTERY SOC':'BATTERI SOC', 'BATTERY POWER':'BATTERIEFFEKT', 'BATTERY CURRENT':'BATTERISTRØM',
+    'BATTERY VOLT':'BATTERISPÆNDING', 'MIN CELL':'MIN. CELLE', 'MAX CELL':'MAX. CELLE',
+    'Batt Discharge':'Batteriafladning', 'BATT2 POWER':'BATTERI2 EFFEKT', 'BATT2 CURRENT':'BATTERI2 STRØM',
+    'BATT2 VOLT':'BATTERI2 SPÆNDING', 'INVERTER TEMP':'INVERTER TEMP.', "TODAY'S PV":'PV I DAG',
+    "TODAY'S LOAD":'BELASTNING I DAG', 'BATT CHARGE':'BATTERIOPLADNING', 'TOTAL PV':'PV TOTAL',
+    'INV STATE':'INVERTERSTATUS', 'TOTAL IMP':'TOTAL IMPORT', 'TOTAL EXP':'TOTAL EKSPORT',
+    'CHARGER STATE':'OPLADERSTATUS', 'CHARGER POWER':'OPLADEREFFEKT', 'CHARGER CURRENT':'OPLADERSTRØM',
+    'CAR SOC':'BIL SOC', 'CHARGE ETA':'OPLADNING ETA',
+  },
+  fi: {
+    'DASHBOARD':'YLEISKATSAUS', 'Home':'Koti', 'ENERGY':'ENERGIA',
+    'Production & Flow':'Tuotanto & Virtaus', 'SMART PLUGS':'ÄLYPISTOKKEET', 'Load & Switches':'Kuorma & Kytkimet',
+    'BATTERY':'AKKU', 'Status & Settings':'Tila & Asetukset', 'CLIMATE':'ILMASTO',
+    'Temperature & Humidity':'Lämpötila & Kosteus', 'SECURITY':'TURVALLISUUS', 'Alarms & Cameras':'Hälytykset & Kamerat',
+    'AUTOMATION':'AUTOMAATIO', 'Scenes & Routines':'Tilanteet & Rutiinit', 'LIGHTING':'VALAISTUS',
+    'Lights & Ambience':'Valot & Tunnelma', 'SYSTEM':'JÄRJESTELMÄ', 'System & Preferences':'Järjestelmä & Asetukset',
+    "TODAY'S CONSUMPTION":'KULUTUS TÄNÄÄN', "TODAY'S PRODUCTION":'TUOTANTO TÄNÄÄN', 'RECENT EVENTS':'VIIMEISIMMÄT TAPAHTUMAT',
+    'INV LOAD':'INV. KUORMA', 'No Errors':'Ei virheitä', 'IDLE':'JOUTOKÄYNTI',
+    'DISCHARGING':'PURKAUTUU', 'CHARGING':'LATAUTUU', 'CELL TEMP':'KENNON LÄMPÖ',
+    'LOAD':'KUORMA', 'CELL VOLT':'KENNON JÄNNITE', 'BMS TEMP':'BMS-LÄMPÖ',
+    'ENDURANCE':'KESTOAIKA', 'BATT CURRENT':'AKUN VIRTA', 'CAPACITY':'KAPASITEETTI',
+    'GRID PHASES':'VERKON VAIHEET', 'INVERTER':'INVERTTERI', 'PV1 POWER':'PV1 TEHO',
+    'PV2 POWER':'PV2 TEHO', 'PV3 POWER':'PV3 TEHO', 'PV4 POWER':'PV4 TEHO',
+    'PV5 POWER':'PV5 TEHO', 'PV6 POWER':'PV6 TEHO', 'PV TOTAL':'PV YHTEENSÄ',
+    'PV1 VOLT':'PV1 JÄNNITE', 'PV2 VOLT':'PV2 JÄNNITE', 'PV3 VOLT':'PV3 JÄNNITE',
+    'PV4 VOLT':'PV4 JÄNNITE', 'PV5 VOLT':'PV5 JÄNNITE', 'PV6 VOLT':'PV6 JÄNNITE',
+    'WEATHER':'SÄÄ', 'TEMPERATURE':'LÄMPÖTILA', 'WIND SPEED':'TUULEN NOPEUS',
+    'WIND DIR':'TUULEN SUUNTA', 'SUN':'AURINKO', 'GRID POWER':'VERKON TEHO',
+    'GRID VOLT':'VERKON JÄNNITE', 'GRID IMPORT':'VERKOSTA OTTO', 'GRID EXPORT':'VERKKOON SYÖTTÖ',
+    'L1 VOLT':'L1 JÄNNITE', 'L2 VOLT':'L2 JÄNNITE', 'L3 VOLT':'L3 JÄNNITE',
+    'BATTERY SOC':'AKUN SOC', 'BATTERY POWER':'AKUN TEHO', 'BATTERY CURRENT':'AKUN VIRTA',
+    'BATTERY VOLT':'AKUN JÄNNITE', 'MIN CELL':'MIN. KENNO', 'MAX CELL':'MAKS. KENNO',
+    'Batt Discharge':'Akun Purkautuminen', 'BATT2 POWER':'AKKU2 TEHO', 'BATT2 CURRENT':'AKKU2 VIRTA',
+    'BATT2 VOLT':'AKKU2 JÄNNITE', 'INVERTER TEMP':'INVERTTERIN LÄMPÖ', "TODAY'S PV":'PV TÄNÄÄN',
+    "TODAY'S LOAD":'KUORMA TÄNÄÄN', 'BATT CHARGE':'AKUN LATAUS', 'TOTAL PV':'PV YHTEENSÄ',
+    'INV STATE':'INVERTTERIN TILA', 'TOTAL IMP':'KOKONAISOTTO', 'TOTAL EXP':'KOKONAISSYÖTTÖ',
+    'CHARGER STATE':'LATURIN TILA', 'CHARGER POWER':'LATURIN TEHO', 'CHARGER CURRENT':'LATURIN VIRTA',
+    'CAR SOC':'AUTON SOC', 'CHARGE ETA':'LATAUKSEN ETA',
+  },
+  ru: {
+    'DASHBOARD':'ПАНЕЛЬ', 'Home':'Главная', 'ENERGY':'ЭНЕРГИЯ',
+    'Production & Flow':'Выработка и Поток', 'SMART PLUGS':'УМНЫЕ РОЗЕТКИ', 'Load & Switches':'Нагрузка и Выключатели',
+    'BATTERY':'АККУМУЛЯТОР', 'Status & Settings':'Статус и Настройки', 'CLIMATE':'КЛИМАТ',
+    'Temperature & Humidity':'Температура и Влажность', 'SECURITY':'БЕЗОПАСНОСТЬ', 'Alarms & Cameras':'Сигнализация и Камеры',
+    'AUTOMATION':'АВТОМАТИЗАЦИЯ', 'Scenes & Routines':'Сценарии и Рутины', 'LIGHTING':'ОСВЕЩЕНИЕ',
+    'Lights & Ambience':'Свет и Атмосфера', 'SYSTEM':'СИСТЕМА', 'System & Preferences':'Система и Настройки',
+    "TODAY'S CONSUMPTION":'ПОТРЕБЛЕНИЕ СЕГОДНЯ', "TODAY'S PRODUCTION":'ВЫРАБОТКА СЕГОДНЯ', 'RECENT EVENTS':'ПОСЛЕДНИЕ СОБЫТИЯ',
+    'INV LOAD':'НАГРУЗКА ИНВ.', 'No Errors':'Нет ошибок', 'IDLE':'ОЖИДАНИЕ',
+    'DISCHARGING':'РАЗРЯД', 'CHARGING':'ЗАРЯД', 'CELL TEMP':'ТЕМП. ЯЧЕЙКИ',
+    'LOAD':'НАГРУЗКА', 'CELL VOLT':'НАПР. ЯЧЕЙКИ', 'BMS TEMP':'ТЕМП. BMS',
+    'ENDURANCE':'АВТОНОМНОСТЬ', 'BATT CURRENT':'ТОК АКБ', 'CAPACITY':'ЁМКОСТЬ',
+    'GRID PHASES':'ФАЗЫ СЕТИ', 'INVERTER':'ИНВЕРТОР', 'PV1 POWER':'МОЩНОСТЬ PV1',
+    'PV2 POWER':'МОЩНОСТЬ PV2', 'PV3 POWER':'МОЩНОСТЬ PV3', 'PV4 POWER':'МОЩНОСТЬ PV4',
+    'PV5 POWER':'МОЩНОСТЬ PV5', 'PV6 POWER':'МОЩНОСТЬ PV6', 'PV TOTAL':'PV ВСЕГО',
+    'PV1 VOLT':'НАПРЯЖЕНИЕ PV1', 'PV2 VOLT':'НАПРЯЖЕНИЕ PV2', 'PV3 VOLT':'НАПРЯЖЕНИЕ PV3',
+    'PV4 VOLT':'НАПРЯЖЕНИЕ PV4', 'PV5 VOLT':'НАПРЯЖЕНИЕ PV5', 'PV6 VOLT':'НАПРЯЖЕНИЕ PV6',
+    'WEATHER':'ПОГОДА', 'TEMPERATURE':'ТЕМПЕРАТУРА', 'WIND SPEED':'СКОР. ВЕТРА',
+    'WIND DIR':'НАПР. ВЕТРА', 'SUN':'СОЛНЦЕ', 'GRID POWER':'МОЩНОСТЬ СЕТИ',
+    'GRID VOLT':'НАПРЯЖЕНИЕ СЕТИ', 'GRID IMPORT':'ИМПОРТ ИЗ СЕТИ', 'GRID EXPORT':'ЭКСПОРТ В СЕТЬ',
+    'L1 VOLT':'НАПРЯЖЕНИЕ L1', 'L2 VOLT':'НАПРЯЖЕНИЕ L2', 'L3 VOLT':'НАПРЯЖЕНИЕ L3',
+    'BATTERY SOC':'ЗАРЯД АКБ', 'BATTERY POWER':'МОЩНОСТЬ АКБ', 'BATTERY CURRENT':'ТОК АКБ',
+    'BATTERY VOLT':'НАПРЯЖЕНИЕ АКБ', 'MIN CELL':'МИН. ЯЧЕЙКА', 'MAX CELL':'МАКС. ЯЧЕЙКА',
+    'Batt Discharge':'Разряд АКБ', 'BATT2 POWER':'МОЩНОСТЬ АКБ2', 'BATT2 CURRENT':'ТОК АКБ2',
+    'BATT2 VOLT':'НАПРЯЖЕНИЕ АКБ2', 'INVERTER TEMP':'ТЕМП. ИНВЕРТОРА', "TODAY'S PV":'PV СЕГОДНЯ',
+    "TODAY'S LOAD":'НАГРУЗКА СЕГОДНЯ', 'BATT CHARGE':'ЗАРЯД АКБ', 'TOTAL PV':'PV ВСЕГО',
+    'INV STATE':'СТАТУС ИНВЕРТОРА', 'TOTAL IMP':'ИМПОРТ ВСЕГО', 'TOTAL EXP':'ЭКСПОРТ ВСЕГО',
+    'CHARGER STATE':'СТАТУС ЗАРЯДКИ', 'CHARGER POWER':'МОЩНОСТЬ ЗАРЯДКИ', 'CHARGER CURRENT':'ТОК ЗАРЯДКИ',
+    'CAR SOC':'ЗАРЯД АВТО', 'CHARGE ETA':'ETA ЗАРЯДКИ',
+  },
+  uk: {
+    'DASHBOARD':'ПАНЕЛЬ', 'Home':'Головна', 'ENERGY':'ЕНЕРГІЯ',
+    'Production & Flow':'Виробництво та Потік', 'SMART PLUGS':'РОЗУМНІ РОЗЕТКИ', 'Load & Switches':'Навантаження та Вимикачі',
+    'BATTERY':'АКУМУЛЯТОР', 'Status & Settings':'Статус та Налаштування', 'CLIMATE':'КЛІМАТ',
+    'Temperature & Humidity':'Температура та Вологість', 'SECURITY':'БЕЗПЕКА', 'Alarms & Cameras':'Сигналізація та Камери',
+    'AUTOMATION':'АВТОМАТИЗАЦІЯ', 'Scenes & Routines':'Сценарії та Рутини', 'LIGHTING':'ОСВІТЛЕННЯ',
+    'Lights & Ambience':'Світло та Атмосфера', 'SYSTEM':'СИСТЕМА', 'System & Preferences':'Система та Налаштування',
+    "TODAY'S CONSUMPTION":'СПОЖИВАННЯ СЬОГОДНІ', "TODAY'S PRODUCTION":'ВИРОБНИЦТВО СЬОГОДНІ', 'RECENT EVENTS':'ОСТАННІ ПОДІЇ',
+    'INV LOAD':'НАВАНТАЖ. ІНВ.', 'No Errors':'Немає помилок', 'IDLE':'ОЧІКУВАННЯ',
+    'DISCHARGING':'РОЗРЯДКА', 'CHARGING':'ЗАРЯДКА', 'CELL TEMP':'ТЕМП. ЕЛЕМЕНТА',
+    'LOAD':'НАВАНТАЖЕННЯ', 'CELL VOLT':'НАПР. ЕЛЕМЕНТА', 'BMS TEMP':'ТЕМП. BMS',
+    'ENDURANCE':'АВТОНОМНІСТЬ', 'BATT CURRENT':'СТРУМ АКБ', 'CAPACITY':'ЄМНІСТЬ',
+    'GRID PHASES':'ФАЗИ МЕРЕЖІ', 'INVERTER':'ІНВЕРТОР', 'PV1 POWER':'ПОТУЖНІСТЬ PV1',
+    'PV2 POWER':'ПОТУЖНІСТЬ PV2', 'PV3 POWER':'ПОТУЖНІСТЬ PV3', 'PV4 POWER':'ПОТУЖНІСТЬ PV4',
+    'PV5 POWER':'ПОТУЖНІСТЬ PV5', 'PV6 POWER':'ПОТУЖНІСТЬ PV6', 'PV TOTAL':'PV ЗАГАЛОМ',
+    'PV1 VOLT':'НАПРУГА PV1', 'PV2 VOLT':'НАПРУГА PV2', 'PV3 VOLT':'НАПРУГА PV3',
+    'PV4 VOLT':'НАПРУГА PV4', 'PV5 VOLT':'НАПРУГА PV5', 'PV6 VOLT':'НАПРУГА PV6',
+    'WEATHER':'ПОГОДА', 'TEMPERATURE':'ТЕМПЕРАТУРА', 'WIND SPEED':'ШВИДК. ВІТРУ',
+    'WIND DIR':'НАПР. ВІТРУ', 'SUN':'СОНЦЕ', 'GRID POWER':'ПОТУЖНІСТЬ МЕРЕЖІ',
+    'GRID VOLT':'НАПРУГА МЕРЕЖІ', 'GRID IMPORT':'ІМПОРТ З МЕРЕЖІ', 'GRID EXPORT':'ЕКСПОРТ В МЕРЕЖУ',
+    'L1 VOLT':'НАПРУГА L1', 'L2 VOLT':'НАПРУГА L2', 'L3 VOLT':'НАПРУГА L3',
+    'BATTERY SOC':'ЗАРЯД АКБ', 'BATTERY POWER':'ПОТУЖНІСТЬ АКБ', 'BATTERY CURRENT':'СТРУМ АКБ',
+    'BATTERY VOLT':'НАПРУГА АКБ', 'MIN CELL':'МІН. ЕЛЕМЕНТ', 'MAX CELL':'МАКС. ЕЛЕМЕНТ',
+    'Batt Discharge':'Розрядка АКБ', 'BATT2 POWER':'ПОТУЖНІСТЬ АКБ2', 'BATT2 CURRENT':'СТРУМ АКБ2',
+    'BATT2 VOLT':'НАПРУГА АКБ2', 'INVERTER TEMP':'ТЕМП. ІНВЕРТОРА', "TODAY'S PV":'PV СЬОГОДНІ',
+    "TODAY'S LOAD":'НАВАНТАЖЕННЯ СЬОГОДНІ', 'BATT CHARGE':'ЗАРЯДКА АКБ', 'TOTAL PV':'PV ЗАГАЛОМ',
+    'INV STATE':'СТАТУС ІНВЕРТОРА', 'TOTAL IMP':'ІМПОРТ ЗАГАЛОМ', 'TOTAL EXP':'ЕКСПОРТ ЗАГАЛОМ',
+    'CHARGER STATE':'СТАТУС ЗАРЯДКИ', 'CHARGER POWER':'ПОТУЖНІСТЬ ЗАРЯДКИ', 'CHARGER CURRENT':'СТРУМ ЗАРЯДКИ',
+    'CAR SOC':'ЗАРЯД АВТО', 'CHARGE ETA':'ETA ЗАРЯДКИ',
+  },
+  tr: {
+    'DASHBOARD':'PANO', 'Home':'Ana Sayfa', 'ENERGY':'ENERJİ',
+    'Production & Flow':'Üretim & Akış', 'SMART PLUGS':'AKILLI PRİZLER', 'Load & Switches':'Yük & Anahtarlar',
+    'BATTERY':'AKÜ', 'Status & Settings':'Durum & Ayarlar', 'CLIMATE':'İKLİM',
+    'Temperature & Humidity':'Sıcaklık & Nem', 'SECURITY':'GÜVENLİK', 'Alarms & Cameras':'Alarmlar & Kameralar',
+    'AUTOMATION':'OTOMASYON', 'Scenes & Routines':'Sahneler & Rutinler', 'LIGHTING':'AYDINLATMA',
+    'Lights & Ambience':'Işıklar & Ambiyans', 'SYSTEM':'SİSTEM', 'System & Preferences':'Sistem & Tercihler',
+    "TODAY'S CONSUMPTION":'BUGÜNKÜ TÜKETİM', "TODAY'S PRODUCTION":'BUGÜNKÜ ÜRETİM', 'RECENT EVENTS':'SON OLAYLAR',
+    'INV LOAD':'İNV. YÜKÜ', 'No Errors':'Hata yok', 'IDLE':'BOŞTA',
+    'DISCHARGING':'DEŞARJ', 'CHARGING':'ŞARJ', 'CELL TEMP':'HÜCRE SICAKLIĞI',
+    'LOAD':'YÜK', 'CELL VOLT':'HÜCRE VOLTAJI', 'BMS TEMP':'BMS SICAKLIĞI',
+    'ENDURANCE':'DAYANMA SÜRESİ', 'BATT CURRENT':'AKÜ AKIMI', 'CAPACITY':'KAPASİTE',
+    'GRID PHASES':'ŞEBEKE FAZLARI', 'INVERTER':'İNVERTER', 'PV1 POWER':'PV1 GÜCÜ',
+    'PV2 POWER':'PV2 GÜCÜ', 'PV3 POWER':'PV3 GÜCÜ', 'PV4 POWER':'PV4 GÜCÜ',
+    'PV5 POWER':'PV5 GÜCÜ', 'PV6 POWER':'PV6 GÜCÜ', 'PV TOTAL':'TOPLAM PV',
+    'PV1 VOLT':'PV1 VOLTAJI', 'PV2 VOLT':'PV2 VOLTAJI', 'PV3 VOLT':'PV3 VOLTAJI',
+    'PV4 VOLT':'PV4 VOLTAJI', 'PV5 VOLT':'PV5 VOLTAJI', 'PV6 VOLT':'PV6 VOLTAJI',
+    'WEATHER':'HAVA DURUMU', 'TEMPERATURE':'SICAKLIK', 'WIND SPEED':'RÜZGAR HIZI',
+    'WIND DIR':'RÜZGAR YÖNÜ', 'SUN':'GÜNEŞ', 'GRID POWER':'ŞEBEKE GÜCÜ',
+    'GRID VOLT':'ŞEBEKE VOLTAJI', 'GRID IMPORT':'ŞEBEKEDEN ALIM', 'GRID EXPORT':'ŞEBEKEYE SATIŞ',
+    'L1 VOLT':'L1 VOLTAJI', 'L2 VOLT':'L2 VOLTAJI', 'L3 VOLT':'L3 VOLTAJI',
+    'BATTERY SOC':'AKÜ SOC', 'BATTERY POWER':'AKÜ GÜCÜ', 'BATTERY CURRENT':'AKÜ AKIMI',
+    'BATTERY VOLT':'AKÜ VOLTAJI', 'MIN CELL':'MIN. HÜCRE', 'MAX CELL':'MAKS. HÜCRE',
+    'Batt Discharge':'Akü Deşarjı', 'BATT2 POWER':'AKÜ2 GÜCÜ', 'BATT2 CURRENT':'AKÜ2 AKIMI',
+    'BATT2 VOLT':'AKÜ2 VOLTAJI', 'INVERTER TEMP':'İNVERTER SICAKLIĞI', "TODAY'S PV":'BUGÜNKÜ PV',
+    "TODAY'S LOAD":'BUGÜNKÜ YÜK', 'BATT CHARGE':'AKÜ ŞARJI', 'TOTAL PV':'TOPLAM PV',
+    'INV STATE':'İNVERTER DURUMU', 'TOTAL IMP':'TOPLAM ALIM', 'TOTAL EXP':'TOPLAM SATIŞ',
+    'CHARGER STATE':'ŞARJ DURUMU', 'CHARGER POWER':'ŞARJ GÜCÜ', 'CHARGER CURRENT':'ŞARJ AKIMI',
+    'CAR SOC':'ARAÇ SOC', 'CHARGE ETA':'ŞARJ ETA',
+  },
+};
+
 /* ── canonical geometry (measured from template, scaled 1536→1500) ── */
 const SL = {
-  nav:  { x:20, w:211, h:77, tops:[146,229,311,396,485,568,652,735] },
+  nav:  { x:20, w:211, h:77, tops:[146,229,312,395,478,561,644,727,810] },
   r_cyl:[1113,92,152,288], r_stats:[1275,136,208,237], r_mode:[1275,25,208,104],
   r_pvtile:[1113,384,369,50], r_ev:[1113,436,369,50], r_cons:[1113,488,369,123], r_prod:[1113,613,369,123], r_events:[1113,738,369,141],
   pv:[323,575,360,33], pwr:[720,575,355,33],
@@ -133,6 +562,7 @@ const glowShadow = g => `inset 0 1px 0 rgba(120,210,255,.28),inset 0 -1px 0 rgba
 const NAV_VIEWS = [
   ['dashboard',  'DASHBOARD',  'Home',                  'home'],
   ['energy',     'ENERGY',     'Production & Flow',     'bolt'],
+  ['plugs',      'SMART PLUGS','Load & Switches',       'plug'],
   ['battery',    'BATTERY',    'Status & Settings',     'batt'],
   ['climate',    'CLIMATE',    'Temperature & Humidity','therm'],
   ['security',   'SECURITY',   'Alarms & Cameras',      'shield'],
@@ -150,15 +580,15 @@ class CasaLuna extends HTMLElement {
   static getStubConfig() {
     return {
       pv1_power: 'sensor.goodwe_pv1_power',
-      pv2_power: 'sensor.goodwe_pv2_power',
-      pv3_power: '', pv4_power: '',
+      pv2_power: '',
+      pv3_power: '', pv4_power: '', pv5_power: '', pv6_power: '',
       pv_total_power: 'sensor.goodwe_pv_power',
       grid_active_power: 'sensor.goodwe_active_power',
-      grid_import_energy: 'sensor.goodwe_today_energy_import',
       grid_export_energy: '',
       consump: 'sensor.goodwe_house_consumption',
       today_pv: 'sensor.goodwe_today_s_pv_generation',
       total_pv: 'sensor.goodwe_total_pv_generation',
+      total_import: '', total_export: '',
       inverter_state: 'sensor.goodwe_work_mode',
       inverter_error: '',
       today_batt_chg: 'sensor.goodwe_today_battery_charge',
@@ -193,16 +623,16 @@ class CasaLuna extends HTMLElement {
       label_bms_temp: 'BMS TEMP', label_endurance: 'ENDURANCE',
       label_batt_current: 'BATT CURRENT', label_capacity: 'CAPACITY',
       pv1_voltage: 'sensor.goodwe_pv1_voltage',
-      pv2_voltage: 'sensor.goodwe_pv2_voltage',
-      pv3_voltage: '', pv4_voltage: '',
+      pv2_voltage: '',
+      pv3_voltage: '', pv4_voltage: '', pv5_voltage: '', pv6_voltage: '',
       grid_import_today: 'sensor.goodwe_today_energy_import',
       grid_voltage: '',
-      _show_3phase: false, grid_phase_a: '', grid_phase_b: '', grid_phase_c: '',
+      _show_phase: true, grid_phase_a: '', grid_phase_b: '', grid_phase_c: '',
       grid_phase_a_volt: '', grid_phase_b_volt: '', grid_phase_c_volt: '',
       _show_battery2: false,
       invert_battery_power: false, invert_grid_power: true,
       _show_pv_extra: false, _show_ev: false,
-      _show_bars: true,
+      _show_bars: true, _show_battstats: true, _show_pvtile: true,
       _extra_tile_1_enabled: true,  _extra_tile_1_label: 'Heat Pump',   _extra_tile_1_entity: '', _extra_tile_1_icon: 'heat',
       _extra_tile_2_enabled: true,  _extra_tile_2_label: 'Irrigation',  _extra_tile_2_entity: '', _extra_tile_2_icon: 'water',
       _extra_tile_3_enabled: true,  _extra_tile_3_label: 'Gas / Flame', _extra_tile_3_entity: 'binary_sensor.espflame', _extra_tile_3_icon: 'flame',
@@ -216,7 +646,6 @@ class CasaLuna extends HTMLElement {
       thresh_endurance_low: 2, thresh_endurance_crit: 1,
       /* —— additive (new in casa-luna) —— */
       title: 'CASA LUNA',
-      subtitle: 'ENERGY • AUTOMATION • SECURITY • COMFORT',
       background_path: '/local/community/casa-luna/sky',
       edge_dim: true,
       history_charts: true,
@@ -229,6 +658,7 @@ class CasaLuna extends HTMLElement {
       /* ── phase / inverter flip tile ── */
       label_phase_title: 'GRID PHASES', label_inv_title: 'INVERTER',
       inv_l1_power: 'sensor.goodwe_back_up_l1_power', inv_l2_power: 'sensor.goodwe_back_up_l2_power', inv_l3_power: '',
+      inverter_output_power: '',
       inv_l1_volt: '', inv_l2_volt: '', inv_l3_volt: '',
       /* ── SECURITY view ── (real entities pre-filled; slots empty for later) */
       sec_cam1: 'camera.lc_profile001', sec_cam2: 'camera.lc_profile101',
@@ -240,6 +670,23 @@ class CasaLuna extends HTMLElement {
       clim_ac: '', clim_fridge_temp: '', clim_fridge_door: '', clim_fridge_power: '',
       clim_ambient: 'sensor.esptemp', clim_humidity: '', clim_lux: 'sensor.esplight',
       clim_window_ac: '', clim_schedule: '',
+      clim_ac_name: '', clim_fridge_temp_name: '', clim_fridge_door_name: '', clim_fridge_power_name: '',
+      clim_ambient_name: '', clim_humidity_name: '', clim_lux_name: '',
+      clim_extra_1_entity: '', clim_extra_1_name: '', clim_extra_2_entity: '', clim_extra_2_name: '',
+      clim_extra_3_entity: '', clim_extra_3_name: '', clim_extra_4_entity: '', clim_extra_4_name: '',
+      clim_extra_5_entity: '', clim_extra_5_name: '', clim_extra_6_entity: '', clim_extra_6_name: '',
+      plug_1_entity: '', plug_1_name: '', plug_1_power: '', plug_2_entity: '', plug_2_name: '', plug_2_power: '',
+      plug_3_entity: '', plug_3_name: '', plug_3_power: '', plug_4_entity: '', plug_4_name: '', plug_4_power: '',
+      plug_5_entity: '', plug_5_name: '', plug_5_power: '', plug_6_entity: '', plug_6_name: '', plug_6_power: '',
+      sec_flame_name: '', sec_gas_analog_name: '', sec_gas_digital_name: '', sec_motion_name: '', sec_door1_name: '', sec_window1_name: '',
+      sec_extra_1_entity: '', sec_extra_1_name: '', sec_extra_2_entity: '', sec_extra_2_name: '', sec_extra_3_entity: '', sec_extra_3_name: '',
+      sec_extra_4_entity: '', sec_extra_4_name: '', sec_extra_5_entity: '', sec_extra_5_name: '', sec_extra_6_entity: '', sec_extra_6_name: '',
+      light1_name: '', light2_name: '', light3_name: '', light_zigbee_name: '',
+      light_extra_1_entity: '', light_extra_1_name: '', light_extra_2_entity: '', light_extra_2_name: '', light_extra_3_entity: '', light_extra_3_name: '',
+      light_extra_4_entity: '', light_extra_4_name: '', light_extra_5_entity: '', light_extra_5_name: '', light_extra_6_entity: '', light_extra_6_name: '',
+      auto_relay1_name: '', auto_relay2_name: '', auto_relay3_name: '', auto_relay4_name: '',
+      auto_extra_1_entity: '', auto_extra_1_name: '', auto_extra_2_entity: '', auto_extra_2_name: '', auto_extra_3_entity: '', auto_extra_3_name: '',
+      auto_extra_4_entity: '', auto_extra_4_name: '', auto_extra_5_entity: '', auto_extra_5_name: '', auto_extra_6_entity: '', auto_extra_6_name: '',
       /* ── ENERGY view ── (monitoring pre-filled from GoodWe/Tuya; control slots for later) */
       en_pv1: 'sensor.goodwe_pv1_power', en_pv2: 'sensor.goodwe_pv2_power',
       en_grid_power: 'sensor.goodwe_active_power', en_load: 'sensor.goodwe_load',
@@ -248,12 +695,12 @@ class CasaLuna extends HTMLElement {
       en_dod_holding: '', en_soc_protect: '', en_dod_ongrid: '', en_dod_offgrid: '',
       en_eco_power: '', en_ems_power: '', en_grid_switch: 'switch.grid_switch', en_sync_time: '',
       /* ── BATTERY view ── (JK BMS pre-filled; charge-control slots for later) */
-      bat_soc: 'sensor.jk_bms_battery_soc', bat_voltage: 'sensor.jk_bms_battery_voltage',
-      bat_current: 'sensor.jk_bms_battery_current', bat_power: 'sensor.jk_bms_battery_power',
-      bat_remain: 'sensor.jk_bms_battery_remaining_capacity',
-      bat_cellmax: 'sensor.jk_bms_max_cell_voltage', bat_cellmin: 'sensor.jk_bms_min_cell_voltage',
-      bat_temp1: 'sensor.jk_bms_battery_temperature_1', bat_temp2: 'sensor.jk_bms_battery_temperature_2',
-      bat_mos: 'sensor.jk_bms_power_tube_temperature',
+      bat_soc: '', bat_voltage: '',
+      bat_current: '', bat_power: '',
+      bat_remain: '',
+      bat_cellmax: '', bat_cellmin: '',
+      bat_temp1: '', bat_temp2: '',
+      bat_mos: '',
       bat_charge_enable: '', bat_discharge_enable: '', bat_force_charge: '', bat_soc_limit: '',
       /* ── AUTOMATION view ── (relays + Alexa pre-filled; scenes/automations/timers slots) */
       auto_scene_night: '', auto_scene_morning: '', auto_scene_away: '',
@@ -288,17 +735,13 @@ class CasaLuna extends HTMLElement {
       sz_prodcons_total: 15, sz_pvtile: 14,
       sz_bottile_label: 12, sz_bottile_value: 15,
       sz_totals_value: 16, sz_invload: 22,
-      view_energy_entities: [], view_battery_entities: [],
-      view_climate_entities: [], view_security_entities: [],
-      view_automation_entities: [], view_lighting_entities: [],
-      view_system_entities: [],
       /* —— per-entity labels (customizable via ✏️ in each section) —— */
       label_pv1_power: 'PV1 POWER', label_pv2_power: 'PV2 POWER',
-      label_pv3_power: 'PV3 POWER', label_pv4_power: 'PV4 POWER',
+      label_pv3_power: 'PV3 POWER', label_pv4_power: 'PV4 POWER', label_pv5_power: 'PV5 POWER', label_pv6_power: 'PV6 POWER',
       label_pv_total_power: 'PV TOTAL', label_pv1_voltage: 'PV1 VOLT',
       label_weather_entity: 'WEATHER', label_weather_temp_entity: 'TEMPERATURE',
       label_weather_wind_entity: 'WIND SPEED', label_weather_dir_entity: 'WIND DIR', label_sun: 'SUN',
-      label_pv2_voltage: 'PV2 VOLT', label_pv3_voltage: 'PV3 VOLT', label_pv4_voltage: 'PV4 VOLT',
+      label_pv2_voltage: 'PV2 VOLT', label_pv3_voltage: 'PV3 VOLT', label_pv4_voltage: 'PV4 VOLT', label_pv5_voltage: 'PV5 VOLT', label_pv6_voltage: 'PV6 VOLT',
       label_grid_active_power: 'GRID POWER', label_grid_voltage: 'GRID VOLT',
       label_grid_import_today: 'GRID IMPORT', label_grid_export_energy: 'GRID EXPORT',
       label_consump: 'LOAD',
@@ -315,6 +758,8 @@ class CasaLuna extends HTMLElement {
       label_inv_temp: 'INVERTER TEMP',
       label_today_pv: "TODAY'S PV", label_today_load: "TODAY'S LOAD", label_today_batt_chg: 'BATT CHARGE',
       label_total_pv: 'TOTAL PV', label_inverter_state: 'INV STATE',
+      label_today_consumption: "TODAY'S CONSUMPTION", label_today_production: "TODAY'S PRODUCTION",
+      label_total_imp: 'TOTAL IMP', label_total_exp: 'TOTAL EXP', label_chg_dis: 'CHG / DIS',
       label_charger_state: 'CHARGER STATE', label_charger_power: 'CHARGER POWER',
       label_charger_current: 'CHARGER CURRENT', label_charger_soc: 'CAR SOC', label_charger_eta: 'CHARGE ETA',
     };
@@ -351,7 +796,7 @@ class CasaLuna extends HTMLElement {
     this._hass = hass;
     if (!this.config) return;
     if (this.config._demo_mode) this._wrapDemoServices();
-    if (!this._built) this._build();
+    if (!this._built && !this._locked) this._build();
     this._update();
   }
 
@@ -390,6 +835,19 @@ class CasaLuna extends HTMLElement {
   _st(id)  { const s = this._stateObj(id); return s ? s.state : null; }
   _num(id, d = 0) { const v = parseFloat(this._st(id)); return Number.isFinite(v) ? v : d; }
   _attr(id, a) { return this._stateObj(id)?.attributes?.[a]; }
+  /* normalize a power-type entity reading to WATTS regardless of whether the
+     entity itself reports W or kW (checked via its own unit_of_measurement).
+     Defaults to assuming W when no unit is declared, matching GoodWe/JK norms
+     used elsewhere on this card. Use a NaN default to detect unavailable. */
+  _watts(id, d = 0) {
+    if (!id) return d;
+    const v = this._num(id, NaN);
+    if (!Number.isFinite(v)) return d;
+    const u = (this._attr(id, 'unit_of_measurement') || '').trim().toLowerCase();
+    if (u === 'kw') return v * 1000;
+    if (u === 'mw') return v * 1000000;
+    return v;
+  }
   _name(id) { return this._attr(id, 'friendly_name') || id; }
   _lastChanged(id) { const lc = this._stateObj(id)?.last_changed; return lc ? new Date(lc).getTime() : null; }
 
@@ -467,7 +925,23 @@ class CasaLuna extends HTMLElement {
     const m = Math.floor(s / 60); if (m < 60) return `${m}m`;
     const h = Math.floor(m / 60); return `${h}h ${m % 60}m`;
   }
-  _fmt(v, dec = 1) { return Number.isFinite(v) ? v.toFixed(dec).replace(/\.0$/, dec === 1 ? '.0' : '') : '--'; }
+  /* conditional decimals: cap to 2 only when the value has >2; otherwise natural (no padding) */
+  _dec(v) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return '--';
+    const s = String(v);
+    const dot = s.indexOf('.');
+    const decs = dot < 0 ? 0 : s.length - dot - 1;
+    return decs > 2 ? n.toFixed(2) : s;
+  }
+  /* same rule, but reads the RAW entity string first — preserves true source precision
+     even when trailing zeros would otherwise vanish on parseFloat (e.g. "60.000" → 60). */
+  _decEnt(id, fallback = NaN) {
+    const raw = this._st(id);
+    if (raw == null || raw === '') return this._dec(fallback);
+    return this._dec(raw);
+  }
+  _fmt(v) { return this._dec(v); }
 
   /* The 7 customizable tiles. Each maps to the EXISTING editor controls:
      entityKey = the entity the editor already edits; labelKey = its label_ key.
@@ -500,22 +974,28 @@ class CasaLuna extends HTMLElement {
     const num = parseFloat(s.state);
     if (isNaN(num)) return String(s.state);
     const unit = (s.attributes?.unit_of_measurement || '').trim();
-    return num.toFixed(1) + (unit ? ' ' + unit : '');
+    return this._dec(s.state) + (unit ? ' ' + unit : '');
   }
   /* ═══════════════════════ FORMAT & DOM HELPERS ═══════════════════════ */
-  _kwh(v) { return Number.isFinite(v) ? `${v.toFixed(2)} kWh` : '--'; }
+  _kwh(v) { return Number.isFinite(v) ? `${this._dec(v)} kWh` : '--'; }
+  _kwhEnt(id) {
+    const v = this._num(id, NaN);
+    if (!Number.isFinite(v)) return '--';
+    const unit = this._attr(id, 'unit_of_measurement') || 'kWh';
+    return `${this._decEnt(id)} ${unit}`;
+  }
   _cap(s) { return String(s).replace(/_/g, ' ').replace(/\b\w/g, m => m.toUpperCase()); }
   _q(sel) { return this.shadowRoot.querySelector(sel); }
   _setTxt(sel, t) { const e = this._q(sel); if (e && e.textContent !== t) e.textContent = t; }
   _setColor(sel, color) { const e = this._q(sel); if (e) e.style.color = color; }
   /* dual-battery aware value: "v1 | v2 unit" when battery2 on, else "v1 unit". */
   _dualVal(sel, ent1, ent2, unit, fmt) {
-    const f = fmt || (v => this._fmt(v));
+    const f = fmt || (id => this._decEnt(id));
     const v1 = this._num(ent1, NaN);
-    const s1 = Number.isFinite(v1) ? f(v1) : '--';
+    const s1 = Number.isFinite(v1) ? f(ent1) : '--';
     if (this.config._show_battery2) {
       const v2 = this._num(ent2, NaN);
-      const s2 = Number.isFinite(v2) ? f(v2) : '--';
+      const s2 = Number.isFinite(v2) ? f(ent2) : '--';
       this._setTxt(sel, `${s1} | ${s2} ${unit}`);
     } else {
       this._setTxt(sel, Number.isFinite(v1) ? `${s1} ${unit}` : '--');
@@ -526,12 +1006,12 @@ class CasaLuna extends HTMLElement {
   _pvSum() {
     const c = this.config;
     const all = c._show_pv_extra
-      ? [c.pv1_power, c.pv2_power, c.pv3_power, c.pv4_power]
+      ? [c.pv1_power, c.pv2_power, c.pv3_power, c.pv4_power, c.pv5_power, c.pv6_power]
       : [c.pv1_power, c.pv2_power];
     const ids = all.filter(Boolean);
-    if (ids.length === 0) return this._num(c.pv_total_power);
+    if (ids.length === 0) return this._watts(c.pv_total_power);
     let sum = 0;
-    for (const id of ids) sum += this._num(id);
+    for (const id of ids) sum += this._watts(id);
     return sum;
   }
 
@@ -773,6 +1253,8 @@ class CasaLuna extends HTMLElement {
       .pw-cam { flex:1; aspect-ratio:16/10; background:rgba(0,0,0,.55); border:1px solid rgba(0,200,255,.3);
         border-radius:10px; overflow:hidden; position:relative; }
       .pw-cam iframe { width:100%; height:100%; border:none; }
+      .pw-cam .camStream { width:100%; height:100%; object-fit:cover; display:block; background:#000; }
+      .pw-cam[data-cam-tap] { cursor:pointer; }
       .pw-cam .clbl { position:absolute; bottom:6px; left:8px; font-size:11px; font-weight:700;
         color:#eaf4ff; text-shadow:0 1px 3px #000; }
       .pw-cam .crec { position:absolute; top:6px; right:8px; font-size:9px; font-weight:700;
@@ -799,8 +1281,44 @@ class CasaLuna extends HTMLElement {
   }
 
   /* ═══════════════════════ BUILD — full DOM (runs once per config) ═══════════════════════ */
+  /* i18n: translate a card caption (English string is the key + fallback) */
+  _t(s) { const m = LANG[this._lang]; return (m && m[s] != null) ? m[s] : s; }
+  /* a config copy whose untouched label_* defaults are swapped for the active language */
+  _localizedConfig() {
+    const c = { ...this.config };
+    if (!this._lang || this._lang === 'en' || !LANG[this._lang]) return c;
+    const stub = CasaLuna.getStubConfig();
+    for (const k in c) if (k.indexOf('label_') === 0 && c[k] === stub[k]) c[k] = this._t(stub[k]);
+    return c;
+  }
+
+  /* attribution integrity — canonical phrase kept independently of the visible
+     template text (decoded from char codes here, not as a plain string) so a
+     casual find-replace of the on-screen credit is detected, not just trusted. */
+  _attrPhrase() {
+    const c = [98, 121, 32, 116, 104, 101, 32, 75, 104, 97, 110]; // "by the Khan"
+    return c.map(n => String.fromCharCode(n)).join('');
+  }
+  _verifyAttribution() {
+    const el = this._q('#hSubtitle');
+    const txt = el ? el.textContent : '';
+    return txt.indexOf(this._attrPhrase()) !== -1;
+  }
+  _lockCard() {
+    this._locked = true;
+    this.shadowRoot.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:${VB_W}/${VB_H};
+        background:#0a0e14;color:#ff6a6a;font-family:'Segoe UI',Roboto,system-ui,sans-serif;text-align:center;padding:24px">
+        <div>
+          <div style="font-size:20px;font-weight:700;margin-bottom:8px">Casa Luna — attribution required</div>
+          <div style="font-size:13px;color:#a8cae6">This card's author credit has been altered or removed. Restore it to continue using the card.</div>
+        </div>
+      </div>`;
+  }
+
   _build() {
-    const c = this.config;
+    this._lang = ((this.config.language || this._hass?.locale?.language || this._hass?.language || 'en') + '').toLowerCase().slice(0, 2);
+    const c = this._lc = this._localizedConfig();
     const css = this._styles();
 
     /* header (open zone) — hardcoded title/subtitle, weather as HTML */
@@ -829,9 +1347,9 @@ class CasaLuna extends HTMLElement {
           background:linear-gradient(180deg,#ffffff 0%,#dce5ef 30%,#8ba3bc 50%,#b0c4de 75%,#556e89 100%);
           -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
           text-shadow:none;
-          filter:drop-shadow(0 0 18px rgba(58,123,255,0.55)) drop-shadow(0 0 6px rgba(128,179,255,0.7))">CASA LUNA</div>
-        <div style="margin-top:5px;line-height:1;font-family:'Bahnschrift','Arial Narrow','Segoe UI',sans-serif;font-size:11.2px;font-weight:400;
-          letter-spacing:4.8px;color:#a8cae6;text-align:center">ENERGY • AUTOMATION • SECURITY • COMFORT</div>
+          filter:drop-shadow(0 0 18px rgba(58,123,255,0.55)) drop-shadow(0 0 6px rgba(128,179,255,0.7))">${esc(c.title || 'CASA LUNA')}</div>
+        <div id="hSubtitle" style="margin-top:5px;line-height:1;font-family:'Bahnschrift','Arial Narrow','Segoe UI',sans-serif;font-size:11.2px;font-weight:400;
+          letter-spacing:4.8px;color:#a8cae6;text-align:center">ENERGY • AUTOMATION • SECURITY • by the Khan</div>
       </div>
     </div>`;
 
@@ -918,6 +1436,7 @@ class CasaLuna extends HTMLElement {
     const NAV_GLOW = [
       '56,140,255',  /* dashboard — blue */
       '255,170,40',  /* energy — amber */
+      '255,140,255', /* smart plugs — magenta */
       '60,210,90',   /* battery — green */
       '60,160,255',  /* climate — blue */
       '90,110,255',  /* security — indigo */
@@ -938,10 +1457,10 @@ class CasaLuna extends HTMLElement {
             display:flex;align-items:center;justify-content:center">${icon(ik, 39)}</div>
           <div style="position:absolute;left:${txtL}px;top:${navH/2-19}px;right:6px;overflow:hidden;
             font-size:15px;font-weight:700;letter-spacing:.04em;color:#cce4ff;
-            font-family:'Segoe UI',Roboto,'Helvetica Neue',system-ui,sans-serif;white-space:nowrap;text-overflow:ellipsis">${t}</div>
+            font-family:'Segoe UI',Roboto,'Helvetica Neue',system-ui,sans-serif;white-space:nowrap;text-overflow:ellipsis">${this._t(t)}</div>
           <div style="position:absolute;left:${txtL}px;top:${navH/2+2}px;right:6px;overflow:hidden;
             font-size:12px;color:#a8cae6;font-family:'Segoe UI',Roboto,'Helvetica Neue',system-ui,sans-serif;
-            white-space:nowrap;text-overflow:ellipsis">${s}</div>
+            white-space:nowrap;text-overflow:ellipsis">${this._t(s)}</div>
         </div>
       </div>`;
     }).join('');
@@ -997,7 +1516,7 @@ class CasaLuna extends HTMLElement {
       const { r1, r2, r3 } = statRowCalc(h); const iconSz = 36;
       return `<div class="box tap stattile" data-stat="chgdis"
         style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;background:transparent;box-shadow:${glowShadow(g)}">
-        <div class="lbl" style="position:absolute;left:0;top:${r1 - 7}px;width:100%;text-align:center;font-size:${Number(c.sz_tile_label) || 11}px;letter-spacing:.05em">CHG <span style="color:#7fa3c4">/ DIS</span></div>
+        <div class="lbl" style="position:absolute;left:0;top:${r1 - 7}px;width:100%;text-align:center;font-size:${Number(c.sz_tile_label) || 11}px;letter-spacing:.05em">${c.label_chg_dis ? esc(c.label_chg_dis) : 'CHG <span style="color:#7fa3c4">/ DIS</span>'}</div>
         <div style="position:absolute;left:0;top:${r2 - iconSz / 2}px;width:100%;display:flex;justify-content:center;align-items:center">${icon('batt', iconSz)}</div>
         <div style="position:absolute;left:0;top:${r3 - 11}px;width:100%;display:flex;justify-content:center;align-items:center;gap:6px">
           <div class="val" id="v_bchg" style="font-size:${Math.round((Number(c.sz_tile_value) || 21) * 0.86)}px;color:#7ce05a">--</div>
@@ -1012,7 +1531,7 @@ class CasaLuna extends HTMLElement {
     const IB = SL.inv_box, IR = SL.inv_right, DC = SL.donut_c;
     const statCont = `<div class="box" style="left:${SC[0]}px;top:${SC[1]}px;width:${SC[2]}px;height:${SC[3]}px;background:var(--cl-box-bg,rgba(0,0,0,.35))"></div>`;
     const lower = `
-    <div class="box flipcard" id="phaseFlip" style="left:${IB[0]}px;top:${IB[1]}px;width:${IB[2]}px;height:${IB[3]}px;background:var(--cl-box-bg,rgba(0,0,0,.35));perspective:800px">
+    <div class="box flipcard" id="phaseFlip" style="left:${IB[0]}px;top:${IB[1]}px;width:${IB[2]}px;height:${IB[3]}px;background:var(--cl-box-bg,rgba(0,0,0,.35));perspective:800px;${c._show_phase ? "" : "display:none"}">
       <div class="flipinner" id="phaseFlipInner" style="position:absolute;inset:0;transition:transform .5s;transform-style:preserve-3d">
         <!-- FRONT: grid phases -->
         <div class="flipface" style="position:absolute;inset:0;backface-visibility:hidden;padding:0">
@@ -1054,7 +1573,7 @@ class CasaLuna extends HTMLElement {
           }
           return out;
         })()}
-        <text x="57.5" y="48" font-size="14" fill="#a8cae6" text-anchor="middle">INV LOAD</text>
+        <text x="57.5" y="48" font-size="14" fill="#a8cae6" text-anchor="middle">${this._t("INV LOAD")}</text>
         <text id="donutPct" x="57.5" y="80" font-size="${Number(c.sz_invload)||22}" font-weight="800" fill="#eaf4ff" text-anchor="middle">--%</text>
       </svg>
       <div class="val" style="position:absolute;left:14px;top:10px;font-size:10px">${esc(c.inverter_name || 'GOODWE')}</div>
@@ -1065,9 +1584,9 @@ class CasaLuna extends HTMLElement {
     </div>`;
 
     const invTileDefs = [
-      { id:'itImp', tsKey:'imp', label:'TOTAL IMP', ik:'plug',  col:'#ffb45a' },
-      { id:'itExp', tsKey:'exp', label:'TOTAL EXP', ik:'bolt',  col:'#7ce05a' },
-      { id:'itPv',  tsKey:'pv',  label:'TOTAL PV',  ik:'sun',   col:'#ffd24a' },
+      { id:'itImp', tsKey:'imp', label: c.label_total_imp || this._t('TOTAL IMP'), ik:'plug',  col:'#ffb45a' },
+      { id:'itExp', tsKey:'exp', label: c.label_total_exp || this._t('TOTAL EXP'), ik:'bolt',  col:'#7ce05a' },
+      { id:'itPv',  tsKey:'pv',  label: c.label_total_pv  || this._t('TOTAL PV'),  ik:'sun',   col:'#ffd24a' },
     ];
     /* label / icon / value — three rows, vertically equal-spaced; bigger icon */
     const invTiles = invTileDefs.map((td, k) => {
@@ -1079,7 +1598,7 @@ class CasaLuna extends HTMLElement {
       const row3 = Math.round(h * 5/6);   // value centre
       const ent = this._tileState(td.tsKey).entity || '';
       return `<div class="box${ent ? ' tap' : ''}" ${ent ? `data-entity="${esc(ent)}"` : ''} style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">
-        <div class="lbl" style="position:absolute;left:0;top:${row1-7}px;width:100%;text-align:center;font-size:11px;letter-spacing:.05em">${td.label}</div>
+        <div class="lbl" id="itLbl${k}" style="position:absolute;left:4px;right:4px;top:${row1-7}px;text-align:center;font-size:11px;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(td.label)}</div>
         <div style="position:absolute;left:0;top:${row2-iconSz/2}px;width:100%;display:flex;justify-content:center;align-items:center">${icon(td.ik, iconSz)}</div>
         <div class="val" id="${td.id}" style="position:absolute;left:0;top:${row3-9}px;width:100%;text-align:center;font-size:${Number(c.sz_totals_value)||16}px;color:${td.col}">--</div>
       </div>`;
@@ -1132,7 +1651,7 @@ class CasaLuna extends HTMLElement {
     const prodBox = ([x, y, w, h]) => {
       const col = '#7ce05a';
       const chartH = h - 38;
-      const front = `<div class="val" style="position:absolute;left:14px;top:10px;font-size:14px">TODAY'S PRODUCTION</div>
+      const front = `<div class="val" style="position:absolute;left:14px;top:10px;font-size:14px">${c.label_today_production || this._t("TODAY'S PRODUCTION")}</div>
         <div class="val" id="prTotal" style="position:absolute;right:14px;top:10px;font-size:${Number(c.sz_prodcons_total)||15}px;color:${col}">--</div>
         <div class="well" style="position:absolute;left:12px;top:32px;width:${w - 24}px;height:${chartH}px"></div>
         <svg id="prChart" style="position:absolute;left:12px;top:32px;width:${w - 24}px;height:${chartH}px">
@@ -1149,10 +1668,13 @@ class CasaLuna extends HTMLElement {
     /* PV PWR tile (single row) — above consumption; tap → custom voltage popup */
     const pvTileBox = (() => {
       const [px, py, pw, ph] = SL.r_pvtile;
-      const pvIds = [c.pv1_power, c.pv2_power, c.pv3_power, c.pv4_power];
-      let nActive = 0; const maxStrings = c._show_pv_extra ? 4 : 2;
-      for (let i = 0; i < maxStrings; i++) if (pvIds[i]) nActive = i + 1;
-      nActive = Math.max(2, nActive);
+      const pvIds = [c.pv1_power, c.pv2_power, c.pv3_power, c.pv4_power, c.pv5_power, c.pv6_power];
+      let rawActive = 0; const maxStrings = c._show_pv_extra ? 6 : 2;
+      for (let i = 0; i < maxStrings; i++) if (pvIds[i] && this._stateObj(pvIds[i])) rawActive = i + 1;
+      /* hide-when-empty: no PV string configured at all → drop the tile entirely;
+         also respects the explicit show/hide toggle even when entities ARE set */
+      if (rawActive === 0 || c._show_pvtile === false) return '';
+      const nActive = Math.max(1, rawActive);
       const labelW = 64, slotW = (pw - 24 - labelW) / nActive;
       const rowH = ph / 2;
       const row = (rowLabel, idPrefix, col, topY) => {
@@ -1172,7 +1694,7 @@ class CasaLuna extends HTMLElement {
     const consBox = ([x, y, w, h]) => {
       const col = '#46bcff';
       const chartH = h - 38;
-      const front = `<div class="val" style="position:absolute;left:14px;top:10px;font-size:14px">TODAY'S CONSUMPTION</div>
+      const front = `<div class="val" style="position:absolute;left:14px;top:10px;font-size:14px">${c.label_today_consumption || this._t("TODAY'S CONSUMPTION")}</div>
         <div class="val" id="cnTotal" style="position:absolute;right:14px;top:10px;font-size:${Number(c.sz_prodcons_total)||15}px;color:${col}">--</div>
         <div class="well" style="position:absolute;left:12px;top:32px;width:${w-24}px;height:${chartH}px"></div>
         <svg id="cnChart" style="position:absolute;left:12px;top:32px;width:${w-24}px;height:${chartH}px">
@@ -1187,15 +1709,17 @@ class CasaLuna extends HTMLElement {
     };
     const cons = consBox(SL.r_cons);
     const [ex0, ey0, ew0, eh0] = SL.r_events;
-    const eventsFront = `<div class="val" style="position:absolute;left:14px;top:11px;font-size:14px">RECENT EVENTS</div>
+    const eventsFront = `<div class="val" style="position:absolute;left:14px;top:11px;font-size:14px">${this._t('RECENT EVENTS')}</div>
       <div id="evRows" style="position:absolute;left:0;top:34px;right:0;bottom:8px;overflow-y:auto"></div>`;
     const events = `
     <div class="box collapsible" data-collapse-id="events" style="left:${ex0}px;top:${ey0}px;width:${ew0}px;height:${eh0}px;overflow:hidden;background:var(--cl-box-bg,rgba(0,0,0,.35))">
       ${collapsibleInner('events', eventsFront, 'EVENT', '#7fd4ff', 'top:8px;right:8px')}
     </div>`;
 
-    /* bottom strip from _extra_tile_N */
-    const bottom = [1,2,3,4,5,6].map((n, k) => {
+    /* bottom strip from _extra_tile_N — skip disabled tiles, compact the rest left */
+    const bottom = [1,2,3,4,5,6]
+      .filter(n => c[`_extra_tile_${n}_enabled`] !== false)
+      .map((n, k) => {
       const x = SL.bot.xs[k], { y, w, h } = SL.bot;
       const lbl = c[`_extra_tile_${n}_label`] || `TILE ${n}`;
       const ikName = c[`_extra_tile_${n}_icon`];
@@ -1205,7 +1729,7 @@ class CasaLuna extends HTMLElement {
       return `<div class="box tap bottile" id="bottile${n}" data-n="${n}"
         style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">
         <div id="btIcon${n}" style="position:absolute;left:8px;top:10px;width:46px;height:${h - 20}px;display:flex;align-items:center;justify-content:center">${iconHtml}</div>
-        <div class="val" style="position:absolute;left:60px;top:13px;font-size:${Number(c.sz_bottile_label)||12}px">${esc(lbl).toUpperCase()}</div>
+        <div class="val" id="btLbl${n}" style="position:absolute;left:60px;right:8px;top:13px;font-size:${Number(c.sz_bottile_label)||12}px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(lbl).toUpperCase()}</div>
         <div class="val" id="bt${n}" style="position:absolute;left:60px;top:35px;font-size:${Number(c.sz_bottile_value)||15}px;color:#7fd4ff">--</div>
       </div>`;
     }).join('');
@@ -1313,22 +1837,23 @@ class CasaLuna extends HTMLElement {
       </div>`;
     }).join('');
     const battStats = `
-    <div class="box flipcard" id="battFlip" style="left:${sx0}px;top:${sy0}px;width:${sw0}px;height:${sh0}px;perspective:800px">
-      <div class="flipinner" style="position:absolute;inset:0;transition:transform .5s;transform-style:preserve-3d">
-        <!-- FRONT: full battery stat rows -->
-        <div class="flipface" style="position:absolute;inset:0;backface-visibility:hidden">
-          <div class="flipbtn" id="battFlipBtn" style="right:10px;top:8px">↻</div>
-          ${statRows}
-        </div>
-        <!-- BACK: condensed (current / capacity / endurance) -->
-        <div class="flipface" style="position:absolute;inset:0;backface-visibility:hidden;transform:rotateY(180deg)">
-          <div class="flipbtn" id="battFlipBackBtn" style="right:10px;top:8px">↻</div>
-          <div class="val" style="position:absolute;left:16px;top:12px;font-size:15px;letter-spacing:.05em">BATTERY</div>
-          <div style="position:absolute;left:16px;right:14px;top:48px;bottom:12px;display:flex;flex-direction:column;justify-content:space-around">
-            ${[['bCurB', c.label_batt_current || 'BATT CURRENT'], ['bCB', c.label_capacity || 'CAPACITY'], ['bEB', c.label_endurance || 'ENDURANCE']].map(([id, l]) =>
-              `<div><div style="font-size:12px;color:#a8cae6;letter-spacing:.03em">${l}</div>
-                 <div class="val" id="${id}" style="font-size:20px;color:#d8eeff;text-align:left">--</div></div>`).join('')}
-          </div>
+    <div class="box" id="battFlip" style="left:${sx0}px;top:${sy0}px;width:${sw0}px;height:${sh0}px;${c._show_battstats ? "" : "display:none"}">
+      <!-- FRONT: full battery stat rows -->
+      <div id="battFaceFront" style="position:absolute;inset:0">
+        <div class="flipbtn" id="battFlipBtn" style="right:10px;top:8px">↻</div>
+        ${statRows}
+      </div>
+      <!-- BACK: 6 PV strings (power + volt) -->
+      <div id="battFaceBack" style="position:absolute;inset:0;display:none">
+        <div class="flipbtn" id="battFlipBackBtn" style="right:10px;top:8px">↻</div>
+        <div class="val" style="position:absolute;left:16px;top:10px;font-size:15px;letter-spacing:.05em">PV</div>
+        <div style="position:absolute;left:16px;right:14px;top:38px;bottom:8px;display:flex;flex-direction:column;justify-content:space-around">
+          ${[1, 2, 3, 4, 5, 6].map(n =>
+            `<div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+               <div style="font-size:12px;color:#a8cae6;letter-spacing:.03em;width:38px">PV${n}</div>
+               <div class="val" id="bPV${n}P" style="font-size:14px;font-weight:700;color:#ffd24a;text-align:right;flex:1">--</div>
+               <div class="val" id="bPV${n}V" style="font-size:14px;font-weight:700;color:#a8cae6;text-align:right;width:62px">--</div>
+             </div>`).join('')}
         </div>
       </div>
     </div>`;
@@ -1547,13 +2072,36 @@ class CasaLuna extends HTMLElement {
     /* interactions */
     this._bindEvents();
 
+    /* attribution check — must run after the subtitle node exists in the DOM */
+    if (!this._verifyAttribution()) { this._lockCard(); return; }
+
     this._built = true;
     this._applyTheme();
     this._setBackground(true);
   }
 
   /* wire all DOM interactions after innerHTML is set (called once from _build) */
+  /* auto-fit bottom-tile labels: shrink font until the name fits (ellipsis as last resort) */
+  _fitBottomLabels() {
+    const base = Number(this.config.sz_bottile_label) || 12;
+    requestAnimationFrame(() => {
+      for (let n = 1; n <= 6; n++) {
+        const el = this._q('#btLbl' + n);
+        if (!el) continue;
+        let fs = base; el.style.fontSize = fs + 'px';
+        while (el.scrollWidth > el.clientWidth && fs > 8) { fs -= 0.5; el.style.fontSize = fs + 'px'; }
+      }
+      for (let k = 0; k < 3; k++) {
+        const el = this._q('#itLbl' + k);
+        if (!el) continue;
+        let fs = 11; el.style.fontSize = fs + 'px';
+        while (el.scrollWidth > el.clientWidth && fs > 7.5) { fs -= 0.5; el.style.fontSize = fs + 'px'; }
+      }
+    });
+  }
+
   _bindEvents() {
+    this._fitBottomLabels();
     const c = this.config;
     this.shadowRoot.querySelectorAll('.navtile').forEach(t =>
       t.addEventListener('click', () => this._openView(t.dataset.view)));
@@ -1563,9 +2111,18 @@ class CasaLuna extends HTMLElement {
     const doFlip = () => flipCard && flipCard.classList.toggle('flipped');
     this._q('#phaseFlipBtn')?.addEventListener('click', e => { e.stopPropagation(); doFlip(); });
     this._q('#phaseFlipBackBtn')?.addEventListener('click', e => { e.stopPropagation(); doFlip(); });
-    /* battery value tile flip: corner ↻ button → condensed back face */
-    const battCard = this._q('#battFlip');
-    const doBattFlip = () => battCard && battCard.classList.toggle('flipped');
+    /* battery value tile flip: corner ↻ button → 6 PV strings; hide dedicated PV tile while flipped.
+       Plain display-swap (no CSS 3D transform) — avoids the backface-visibility/transform-style
+       fragility that caused mirrored/overlapping text on some browsers (e.g. some Android WebViews). */
+    const battFront = this._q('#battFaceFront'), battBack = this._q('#battFaceBack');
+    const doBattFlip = () => {
+      if (!battFront || !battBack) return;
+      const backShowing = battBack.style.display !== 'none';
+      battFront.style.display = backShowing ? '' : 'none';
+      battBack.style.display  = backShowing ? 'none' : '';
+      const pvTile = this._q('#pvPwrTile');
+      if (pvTile) pvTile.style.visibility = backShowing ? '' : 'hidden';
+    };
     this._q('#battFlipBtn')?.addEventListener('click', e => { e.stopPropagation(); doBattFlip(); });
     this._q('#battFlipBackBtn')?.addEventListener('click', e => { e.stopPropagation(); doBattFlip(); });
     this.shadowRoot.querySelectorAll('.bottile').forEach(t => {
@@ -1707,13 +2264,23 @@ class CasaLuna extends HTMLElement {
   _wGrid(cols, html) { return `<div class="pw-grid" style="grid-template-columns:repeat(${cols},1fr)">${html}</div>`; }
 
   /* compact metric TILE: icon / label / value stacked (taps to more-info / history) */
-  _wTile(icon, label, entId, unit = '') {
+  _wTile(icon, label, entId, unit = '', isPower = false) {
     const has = !!entId;
-    const st = has ? this._st(entId) : null;
-    const val = st == null ? '--' : `${st}${unit ? ' ' + unit : ''}`;
+    const raw = has ? this._st(entId) : null;
+    const bad = raw == null || raw === '' || /^(unavailable|unknown)$/i.test(raw);
+    let val;
+    if (bad) {
+      val = '--';
+    } else if (isPower) {
+      const w = this._watts(entId, NaN);
+      val = Number.isFinite(w) ? `${this._dec(w)}${unit ? ' ' + unit : ''}` : `${raw}${unit ? ' ' + unit : ''}`;
+    } else {
+      const n = this._num(entId, NaN);
+      val = Number.isFinite(n) ? `${this._decEnt(entId)}${unit ? ' ' + unit : ''}` : `${raw}${unit ? ' ' + unit : ''}`;
+    }
     return `<div class="pw-mtile" ${has ? `data-more="${esc(entId)}" style="cursor:pointer"` : ''}>
       <div class="mi">${icon}</div><div class="ml">${esc(label)}</div>
-      <div class="mv${st == null ? ' off' : ''}" ${has ? `data-val="${esc(entId)}" data-unit="${esc(unit)}"` : ''}>${esc(val)}</div></div>`;
+      <div class="mv${bad ? ' off' : ''}" ${has ? `data-val="${esc(entId)}" data-unit="${esc(unit)}"` : ''}>${esc(val)}</div></div>`;
   }
 
   /* compact toggle TILE: icon / label / switch stacked */
@@ -1723,6 +2290,21 @@ class CasaLuna extends HTMLElement {
     return `<div class="pw-ttile">
       <div class="ti">${icon}</div><div class="tl">${esc(label)}</div>
       <div class="pw-tgl ${on ? 'on' : ''}" ${has ? `data-toggle="${esc(entId)}"` : 'style="opacity:.4"'}><div class="kn"></div></div></div>`;
+  }
+
+  /* smart-plug tile: name + optional live power + on/off toggle */
+  _wPlugTile(label, switchId, powerId) {
+    const has = !!switchId;
+    const on = has && ['on', 'open', 'playing'].includes(String(this._st(switchId)).toLowerCase());
+    let pw = '';
+    if (powerId) {
+      const n = this._num(powerId, NaN);
+      const txt = Number.isFinite(n) ? `${this._decEnt(powerId)} ${esc(this._attr(powerId, 'unit_of_measurement') || 'W')}` : '--';
+      pw = `<div class="tl" style="color:#5bc8ff;font-weight:700;font-size:13px;margin-top:1px">${txt}</div>`;
+    }
+    return `<div class="pw-ttile">
+      <div class="ti">🔌</div><div class="tl">${esc(label)}</div>${pw}
+      <div class="pw-tgl ${on ? 'on' : ''}" ${has ? `data-toggle="${esc(switchId)}"` : 'style="opacity:.4"'}><div class="kn"></div></div></div>`;
   }
 
   /* compact button TILE */
@@ -1803,8 +2385,13 @@ class CasaLuna extends HTMLElement {
     const base = this.config.camera_stream_base || '';
     const cells = cams.map(([label, src]) => {
       const url = src && base ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=mse` : '';
-      return `<div class="pw-cam">
-        ${url ? `<iframe src="${esc(url)}" allowfullscreen></iframe>` : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#5a7a9a;font-size:12px">📷 ${esc(label)}<br>(stream not set)</div>`}
+      const body = url
+        ? `<iframe src="${esc(url)}" allowfullscreen></iframe>`
+        : src
+          ? `<img class="camStream" data-cam-id="${esc(src)}" alt="${esc(label)}">`
+          : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#5a7a9a;font-size:12px">📷 ${esc(label)}<br>(stream not set)</div>`;
+      return `<div class="pw-cam" ${src ? `data-cam-tap="${esc(src)}" data-cam-label="${esc(label)}" data-cam-url="${esc(url)}"` : ''}>
+        ${body}
         <div class="clbl">${esc(label)}</div><div class="crec">LIVE</div></div>`;
     }).join('');
     return `<div class="pw-cams">${cells}</div>`;
@@ -1927,6 +2514,11 @@ class CasaLuna extends HTMLElement {
   /* wire all widget interactions after a panel renders */
   _bindPanelWidgets(root) {
     const hass = this._hass; if (!hass) return;
+    root.querySelectorAll('[data-cam-tap]').forEach(el => el.addEventListener('click', e => {
+      if (e.target.id === 'camFsClose') return;
+      this._openCameraFullscreen(el.getAttribute('data-cam-tap'), el.getAttribute('data-cam-label') || 'Camera', el.getAttribute('data-cam-url') || '');
+    }));
+    this._refreshCameraStreams();
     root.querySelectorAll('[data-more]').forEach(el => el.addEventListener('click', e => {
       if (e.target.closest('[data-toggle],[data-slider],[data-select],[data-press]')) return;
       this._fireMoreInfo(el.getAttribute('data-more'));
@@ -2049,6 +2641,7 @@ class CasaLuna extends HTMLElement {
       security: () => this._viewSecurity(),
       climate: () => this._viewClimate(),
       energy: () => this._viewEnergy(),
+      plugs: () => this._viewPlugs(),
       battery: () => this._viewBattery(),
       automation: () => this._viewAutomation(),
       lighting: () => this._viewLighting(),
@@ -2144,27 +2737,35 @@ class CasaLuna extends HTMLElement {
         + this._discoverTiles([{ domain: 'binary_sensor', device_class: ['motion', 'occupancy', 'moving'] }, { domain: 'binary_sensor', device_class: ['door', 'window', 'opening', 'garage_door'] }], 4,
           id => { const dc = this._attr(id, 'device_class'); return ['door', 'window', 'opening', 'garage_door'].includes(dc) ? '🚪' : '🚶'; });
     }
+    const grp = (head, body) => body ? this._wHead(head) + body : '';
+    const safety = [
+      c.sec_flame      && this._wTile('🔥', c.sec_flame_name      || 'Flame', c.sec_flame),
+      c.sec_gas_analog && this._wTile('💨', c.sec_gas_analog_name || 'Gas', c.sec_gas_analog),
+      c.sec_gas_digital&& this._wTile('🔔', c.sec_gas_digital_name|| 'Gas Alert', c.sec_gas_digital),
+      c.sec_motion     && this._wTile('🚶', c.sec_motion_name     || 'Motion', c.sec_motion),
+    ].filter(Boolean).join('');
+    const doors = [
+      c.sec_door1   && this._wTile('🚪', c.sec_door1_name   || 'Front Door', c.sec_door1),
+      c.sec_window1 && this._wTile('🪟', c.sec_window1_name || 'Window', c.sec_window1),
+    ].filter(Boolean).join('');
+    const extra = [1, 2, 3, 4, 5, 6].map(n => {
+      const id = c[`sec_extra_${n}_entity`];
+      return id ? this._wTile('🛡️', c[`sec_extra_${n}_name`] || this._name(id), id) : '';
+    }).filter(Boolean).join('');
+    const scenes = [
+      ['🛡️', 'Arm Away', c.sec_scene_arm || ''],
+      ['🏠', 'Disarm', c.sec_scene_disarm || ''],
+      ['🌙', 'Night', c.sec_scene_night || ''],
+    ].filter(s => s[2]);
     return this._wCameras([
       ['Front — Cam 1', c.sec_cam1 || ''],
       ['Gate — Cam 2', c.sec_cam2 || ''],
     ])
-      + this._wHead('Safety Sensors')
-      + this._wGrid(4,
-        this._wTile('🔥', 'Flame', c.sec_flame || '')
-        + this._wTile('💨', 'Gas', c.sec_gas_analog || '')
-        + this._wTile('🔔', 'Gas Alert', c.sec_gas_digital || '')
-        + this._wTile('🚶', 'Motion', c.sec_motion || ''))
-      + this._wHead('Doors & Windows')
-      + this._wGrid(2,
-        this._wTile('🚪', 'Front Door', c.sec_door1 || '')
-        + this._wTile('🪟', 'Window', c.sec_window1 || ''))
-      + this._wHead('Alarm & Scenes')
-      + this._wScenes([
-        ['🛡️', 'Arm Away', c.sec_scene_arm || ''],
-        ['🏠', 'Disarm', c.sec_scene_disarm || ''],
-        ['🌙', 'Night', c.sec_scene_night || ''],
-      ])
-      + this._wToggle('📢', 'Motion alert when away', c.sec_motion_alert || '');
+      + grp('Safety Sensors', safety ? this._wGrid(4, safety) : '')
+      + grp('Doors & Windows', doors ? this._wGrid(2, doors) : '')
+      + grp('More', extra ? this._wGrid(4, extra) : '')
+      + grp('Alarm & Scenes', scenes.length ? this._wScenes(scenes) : '')
+      + (c.sec_motion_alert ? this._wToggle('📢', 'Motion alert when away', c.sec_motion_alert) : '');
   }
 
   /* ── CLIMATE view: AC + fridge + ambient sensors ── */
@@ -2181,22 +2782,33 @@ class CasaLuna extends HTMLElement {
         + this._wHead('Humidity (auto)')
         + this._discoverTiles([{ domain: 'sensor', device_class: 'humidity' }], 4, () => '💧');
     }
-    return this._wHead('Air Conditioning')
-      + this._wClimate('AC', c.clim_ac || '')
-      + this._wHead('Refrigerator')
-      + this._wGrid(3,
-        this._wTile('🌡️', 'Fridge', c.clim_fridge_temp || '', '°C')
-        + this._wTile('🚪', 'Door', c.clim_fridge_door || '')
-        + this._wTile('🔌', 'Power', c.clim_fridge_power || '', 'W'))
-      + this._wHead('Ambient')
-      + this._wGrid(3,
-        this._wTile('🌡️', 'Room', c.clim_ambient || '', '°C')
-        + this._wTile('💧', 'Humidity', c.clim_humidity || '', '%')
-        + this._wTile('💡', 'Lux', c.clim_lux || '', 'lx'))
-      + this._wHead('Automation')
-      + this._wGrid(2,
-        this._wToggleTile('🪟', 'Window→AC', c.clim_window_ac || '')
-        + this._wToggleTile('🕐', 'Schedule', c.clim_schedule || ''));
+    /* manual: only render tiles whose entity is set; drop empty groups entirely */
+    const grp = (head, body) => body ? this._wHead(head) + body : '';
+    const ac = (c.clim_ac || '') ? this._wClimate(c.clim_ac_name || 'AC', c.clim_ac) : '';
+    const fridge = [
+      c.clim_fridge_temp  && this._wTile('🌡️', c.clim_fridge_temp_name  || 'Fridge', c.clim_fridge_temp, '°C'),
+      c.clim_fridge_door  && this._wTile('🚪', c.clim_fridge_door_name  || 'Door',   c.clim_fridge_door),
+      c.clim_fridge_power && this._wTile('🔌', c.clim_fridge_power_name || 'Power',  c.clim_fridge_power, 'W', true),
+    ].filter(Boolean).join('');
+    const ambient = [
+      c.clim_ambient  && this._wTile('🌡️', c.clim_ambient_name  || 'Room',     c.clim_ambient, '°C'),
+      c.clim_humidity && this._wTile('💧', c.clim_humidity_name || 'Humidity', c.clim_humidity, '%'),
+      c.clim_lux      && this._wTile('💡', c.clim_lux_name      || 'Lux',      c.clim_lux, 'lx'),
+    ].filter(Boolean).join('');
+    const extra = [1, 2, 3, 4, 5, 6].map(n => {
+      const id = c[`clim_extra_${n}_entity`];
+      return id ? this._wTile('🌡️', c[`clim_extra_${n}_name`] || this._name(id), id) : '';
+    }).filter(Boolean).join('');
+    const autom = [
+      c.clim_window_ac && this._wToggleTile('🪟', 'Window→AC', c.clim_window_ac),
+      c.clim_schedule  && this._wToggleTile('🕐', 'Schedule',  c.clim_schedule),
+    ].filter(Boolean).join('');
+    const out = grp('Air Conditioning', ac)
+      + grp('Refrigerator', fridge ? this._wGrid(3, fridge) : '')
+      + grp('Ambient', ambient ? this._wGrid(3, ambient) : '')
+      + grp('More', extra ? this._wGrid(3, extra) : '')
+      + grp('Automation', autom ? this._wGrid(2, autom) : '');
+    return out || '<div class="hint" style="opacity:.6;padding:18px">No climate entities configured. Add them in the editor → Climate View.</div>';
   }
 
   /* ── ENERGY view: monitoring + GoodWe inverter controls (from config) ── */
@@ -2204,11 +2816,11 @@ class CasaLuna extends HTMLElement {
     const c = this.config;
     return this._wHead('Live Power')
       + this._wGrid(4,
-        this._wTile('☀️', 'PV1', c.en_pv1 || '', 'W')
-        + this._wTile('☀️', 'PV2', c.en_pv2 || '', 'W')
-        + this._wTile('🏭', 'Grid', c.en_grid_power || '', 'W')
-        + this._wTile('🏠', 'Load', c.en_load || '', 'W')
-        + this._wTile('🔋', 'Backup', c.en_backup || '', 'W')
+        this._wTile('☀️', 'PV1', c.en_pv1 || '', 'W', true)
+        + this._wTile('☀️', 'PV2', c.en_pv2 || '', 'W', true)
+        + this._wTile('🏭', 'Grid', c.en_grid_power || '', 'W', true)
+        + this._wTile('🏠', 'Load', c.en_load || '', 'W', true)
+        + this._wTile('🔋', 'Backup', c.en_backup || '', 'W', true)
         + this._wTile('⚙️', 'Mode', c.en_work_mode || ''))
       + this._wHead('Inverter Controls')
       + this._wGrid(3,
@@ -2230,23 +2842,39 @@ class CasaLuna extends HTMLElement {
         + this._wButtonTile('🕐', 'Sync time', c.en_sync_time || '', 'Press'));
   }
 
+  _viewPlugs() {
+    const c = this.config;
+    const plugs = [1, 2, 3, 4, 5, 6].map(n => {
+      const id = c[`plug_${n}_entity`];
+      return id ? this._wPlugTile(c[`plug_${n}_name`] || this._name(id), id, c[`plug_${n}_power`]) : '';
+    }).filter(Boolean).join('');
+    return plugs
+      ? this._wHead('Smart Plugs') + this._wGrid(3, plugs)
+      : '<div class="hint" style="opacity:.6;padding:18px">No smart plugs configured. Add them in the editor → Smart Plugs View.</div>';
+  }
+
   /* ── BATTERY view: JK BMS detail + charge controls ── */
   _viewBattery() {
     const c = this.config;
+    /* Battery View has its own bat_* entity keys (defaults to JK BMS names), separate
+       from the main face's battery_* keys. If bat_X isn't set OR doesn't actually exist
+       in this HA (e.g. a stale default from a non-GoodWe install), fall back to the
+       main face's equivalent entity so the view mirrors it automatically. */
+    const bf = (batKey, mainKey) => (c[batKey] && this._stateObj(c[batKey])) ? c[batKey] : (c[mainKey] || '');
     return this._wHead('Pack')
       + this._wGrid(4,
-        this._wTile('🔋', 'SoC', c.bat_soc || '', '%')
-        + this._wTile('⚡', 'Voltage', c.bat_voltage || '', 'V')
-        + this._wTile('🔌', 'Current', c.bat_current || '', 'A')
-        + this._wTile('📊', 'Power', c.bat_power || '', 'W')
+        this._wTile('🔋', 'SoC', bf('bat_soc', 'battery_soc'), '%')
+        + this._wTile('⚡', 'Voltage', bf('bat_voltage', 'battery_voltage'), 'V')
+        + this._wTile('🔌', 'Current', bf('bat_current', 'battery_current'), 'A')
+        + this._wTile('📊', 'Power', bf('bat_power', 'battery_power'), 'W', true)
         + this._wTile('⏳', 'Remain', c.bat_remain || '', 'Ah')
-        + this._wTile('🔺', 'Cell Max', c.bat_cellmax || '', 'V')
-        + this._wTile('🔻', 'Cell Min', c.bat_cellmin || '', 'V'))
+        + this._wTile('🔺', 'Cell Max', bf('bat_cellmax', 'battery_max_cell'), 'V')
+        + this._wTile('🔻', 'Cell Min', bf('bat_cellmin', 'battery_min_cell'), 'V'))
       + this._wHead('Temps')
       + this._wGrid(3,
-        this._wTile('🌡️', 'Temp 1', c.bat_temp1 || '', '°C')
-        + this._wTile('🌡️', 'Temp 2', c.bat_temp2 || '', '°C')
-        + this._wTile('🌡️', 'MOS', c.bat_mos || '', '°C'))
+        this._wTile('🌡️', 'Temp 1', bf('bat_temp1', 'battery_temp1'), '°C')
+        + this._wTile('🌡️', 'Temp 2', bf('bat_temp2', 'battery_temp2'), '°C')
+        + this._wTile('🌡️', 'MOS', bf('bat_mos', 'battery_mos'), '°C'))
       + this._wHead('Charge Controls')
       + this._wGrid(3,
         this._wToggleTile('⚡', 'Charge', c.bat_charge_enable || '')
@@ -2283,10 +2911,17 @@ class CasaLuna extends HTMLElement {
       ])
       + this._wHead('Relays')
       + this._wGrid(4,
-        this._wToggleTile('1️⃣', 'Relay 1', c.auto_relay1 || '')
-        + this._wToggleTile('2️⃣', 'Relay 2', c.auto_relay2 || '')
-        + this._wToggleTile('3️⃣', 'Relay 3', c.auto_relay3 || '')
-        + this._wToggleTile('4️⃣', 'Relay 4', c.auto_relay4 || ''))
+        this._wToggleTile('1️⃣', c.auto_relay1_name || 'Relay 1', c.auto_relay1 || '')
+        + this._wToggleTile('2️⃣', c.auto_relay2_name || 'Relay 2', c.auto_relay2 || '')
+        + this._wToggleTile('3️⃣', c.auto_relay3_name || 'Relay 3', c.auto_relay3 || '')
+        + this._wToggleTile('4️⃣', c.auto_relay4_name || 'Relay 4', c.auto_relay4 || ''))
+      + (() => {
+          const ex = [1, 2, 3, 4, 5, 6].map(n => {
+            const id = c[`auto_extra_${n}_entity`];
+            return id ? this._wToggleTile('⚙️', c[`auto_extra_${n}_name`] || this._name(id), id) : '';
+          }).filter(Boolean).join('');
+          return ex ? this._wHead('More') + this._wGrid(4, ex) : '';
+        })()
       + this._wHead('Automations')
       + this._wGrid(3,
         this._wToggleTile('💡', 'Motion', c.auto_motion_lights || '')
@@ -2323,16 +2958,24 @@ class CasaLuna extends HTMLElement {
           + this._wButtonTile('🌑', 'All Off', c.light_all_off || '', 'Off')
           + this._wToggleTile('🔄', 'Adaptive', c.light_adaptive || ''));
     }
-    return this._wHead('Lights')
-      + this._wLight('Living Room', c.light1 || '')
-      + this._wLight('Bedroom', c.light2 || '')
-      + this._wLight('Kitchen', c.light3 || '')
-      + this._wLight('Zigbee Light', c.light_zigbee || '')
-      + this._wHead('All Lights')
-      + this._wGrid(3,
-        this._wButtonTile('🔆', 'All On', c.light_all_on || '', 'On')
-        + this._wButtonTile('🌑', 'All Off', c.light_all_off || '', 'Off')
-        + this._wToggleTile('🔄', 'Adaptive', c.light_adaptive || ''));
+    const grp = (head, body) => body ? this._wHead(head) + body : '';
+    const lights = [
+      c.light1       && this._wLight(c.light1_name       || 'Living Room', c.light1),
+      c.light2       && this._wLight(c.light2_name       || 'Bedroom', c.light2),
+      c.light3       && this._wLight(c.light3_name       || 'Kitchen', c.light3),
+      c.light_zigbee && this._wLight(c.light_zigbee_name || 'Zigbee Light', c.light_zigbee),
+      ...[1, 2, 3, 4, 5, 6].map(n => {
+        const id = c[`light_extra_${n}_entity`];
+        return id ? this._wLight(c[`light_extra_${n}_name`] || this._name(id), id) : '';
+      }),
+    ].filter(Boolean).join('');
+    const all = [
+      c.light_all_on   && this._wButtonTile('🔆', 'All On', c.light_all_on, 'On'),
+      c.light_all_off  && this._wButtonTile('🌑', 'All Off', c.light_all_off, 'Off'),
+      c.light_adaptive && this._wToggleTile('🔄', 'Adaptive', c.light_adaptive),
+    ].filter(Boolean).join('');
+    const out = grp('Lights', lights) + grp('All Lights', all ? this._wGrid(3, all) : '');
+    return out || '<div class="hint" style="opacity:.6;padding:18px">No lighting entities configured. Add them in the editor → Lighting View.</div>';
   }
 
   /* ── SYSTEM view: server, ESP board, device status, temps ── */
@@ -2358,6 +3001,69 @@ class CasaLuna extends HTMLElement {
 
 
   /* ═══════════════════════ POPUPS (more-info, PV voltage, tile control) ═══════════════════════ */
+  /* Live camera feed without go2rtc: ask HA to sign the MJPEG stream proxy path for this
+     camera entity, so the browser can render it directly as a continuous <img> stream
+     (no JS polling needed — multipart MJPEG updates itself). Falls back to a periodically
+     refreshed snapshot (entity_picture) if signing isn't available, e.g. very old HA.
+     Resolved URLs are cached briefly so re-rendering the view each tick doesn't re-sign
+     (and reconnect the stream) every time. */
+  async _resolveCameraStream(entityId, forFullscreen = false) {
+    if (!this._hass || !entityId) return null;
+    const cache = this._camStreamCache || (this._camStreamCache = {});
+    const hit = cache[entityId];
+    if (hit && hit.expiresAt > Date.now() + 10000 && !forFullscreen) return hit.url;
+    try {
+      const ttl = forFullscreen ? 300 : 55;
+      const res = await this._hass.callWS({
+        type: 'auth/sign_path',
+        path: `/api/camera_proxy_stream/${entityId}`,
+        expires: ttl,
+      });
+      if (res && res.path) {
+        const url = this._hass.hassUrl ? this._hass.hassUrl(res.path) : res.path;
+        if (!forFullscreen) cache[entityId] = { url, expiresAt: Date.now() + ttl * 1000, mjpeg: true };
+        return url;
+      }
+    } catch (e) { /* fall through to snapshot */ }
+    const pic = this._attr(entityId, 'entity_picture');
+    const url = pic ? (this._hass.hassUrl ? this._hass.hassUrl(pic) : pic) : null;
+    if (url && !forFullscreen) cache[entityId] = { url, expiresAt: Date.now() + 5000, mjpeg: false };
+    return url;
+  }
+  /* set/refresh every fallback camera <img> on the dashboard; called once after each
+     render. Reuses the cached URL (see above) so an MJPEG stream isn't restarted every tick. */
+  _refreshCameraStreams() {
+    const imgs = this.shadowRoot.querySelectorAll('img.camStream[data-cam-id]');
+    imgs.forEach(img => {
+      const id = img.dataset.camId;
+      if (!id) return;
+      this._resolveCameraStream(id).then(url => {
+        if (!url || !img.isConnected) return;
+        if (img.src !== url) img.src = url;
+      });
+    });
+  }
+  _openCameraFullscreen(entityId, label, go2rtcUrl) {
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center';
+    ov.innerHTML = `<div style="position:relative;width:min(92vw,1280px);aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6);border:1px solid rgba(120,180,255,.3)">
+      <div id="camFsBody" style="width:100%;height:100%"></div>
+      <div style="position:absolute;top:10px;left:14px;font-size:14px;font-weight:700;color:#eaf4ff;text-shadow:0 1px 4px #000">${esc(label)}</div>
+      <div id="camFsClose" style="position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.5);color:#eaf4ff;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer">✕</div>
+    </div>`;
+    const close = this._hostOverlay(ov);
+    ov.addEventListener('click', e => { if (e.target === ov || e.target.id === 'camFsClose') close(); });
+    const body = ov.querySelector('#camFsBody');
+    if (go2rtcUrl) {
+      body.innerHTML = `<iframe src="${esc(go2rtcUrl)}" allowfullscreen style="width:100%;height:100%;border:none"></iframe>`;
+    } else {
+      const img = document.createElement('img');
+      img.style.cssText = 'width:100%;height:100%;object-fit:contain;background:#000';
+      body.appendChild(img);
+      this._resolveCameraStream(entityId, true).then(url => { if (url) img.src = url; });
+    }
+  }
+
   _fireMoreInfo(entityId) {
     this.dispatchEvent(new CustomEvent('hass-more-info',
       { detail: { entityId }, bubbles: true, composed: true }));
@@ -2384,7 +3090,7 @@ class CasaLuna extends HTMLElement {
      fixed (mirrors the right-column tiles, which anchor their right edge). ── */
   _setNavCompact(folded) {
     this._navCompact = folded;
-    const N = SL.nav.tops.length;   // total nav tiles (8)
+    const N = SL.nav.tops.length;   // total nav tiles (9)
     const KEEP = 3;                 // first tiles that remain visible when folded
     this.shadowRoot.querySelectorAll('.navtile').forEach(t => {
       const i = +t.dataset.i;
@@ -2418,7 +3124,7 @@ class CasaLuna extends HTMLElement {
      shadow DOM). onConfirm() runs only on accept. ── */
   _confirmSheet({ glyph, title, sub, btnText, col, onConfirm }) {
     const ov = document.createElement('div');
-    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.18);backdrop-filter:none;-webkit-backdrop-filter:none;display:flex;align-items:center;justify-content:center';
     ov.innerHTML =
       '<style>@keyframes clSlUp{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}</style>'
       + '<div style="background:linear-gradient(160deg,#1a2a40,#0d1a2e);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:24px 28px 20px;min-width:240px;max-width:300px;box-shadow:0 24px 60px rgba(0,0,0,.65);text-align:center;animation:clSlUp .18s ease">'
@@ -2449,7 +3155,7 @@ class CasaLuna extends HTMLElement {
   /* ── host-mounted info card: title + label/value rows (for WiFi/Bluetooth). ── */
   _statusPopup(title, rows) {
     const ov = document.createElement('div');
-    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.18);backdrop-filter:none;-webkit-backdrop-filter:none;display:flex;align-items:center;justify-content:center';
     const body = rows.length
       ? rows.map(([l, v, col]) =>
           '<div style="display:flex;justify-content:space-between;gap:18px;padding:8px 2px;border-bottom:1px solid rgba(150,200,255,.1)">'
@@ -2471,7 +3177,7 @@ class CasaLuna extends HTMLElement {
      guarded by a confirm sheet. ── */
   _powerMenu() {
     const ov = document.createElement('div');
-    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.18);backdrop-filter:none;-webkit-backdrop-filter:none;display:flex;align-items:center;justify-content:center';
     const item = (id, glyph, label, sub, col) =>
       '<div id="' + id + '" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(150,200,255,.12);margin-bottom:8px">'
       + '<span style="font-size:20px">' + glyph + '</span>'
@@ -2500,7 +3206,7 @@ class CasaLuna extends HTMLElement {
   _calendarPopup() {
     this._calMonth = new Date(); this._calMonth.setDate(1);
     const ov = document.createElement('div');
-    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.18);backdrop-filter:none;-webkit-backdrop-filter:none;display:flex;align-items:center;justify-content:center';
     ov.innerHTML = '<style>@keyframes clSlUp{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}'
       + '.cl-cal-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:9px;font-size:14px;color:#cfe0f2;cursor:default;position:relative}'
       + '.cl-cal-day.dow{color:#5e83a6;font-size:10px;font-weight:700;letter-spacing:.5px;aspect-ratio:auto;padding:2px 0}'
@@ -2601,7 +3307,7 @@ class CasaLuna extends HTMLElement {
         <div style="font-size:12px;font-weight:650;color:#eaf4ff">${hi}</div>${lo ? `<div style="font-size:11px">${lo}</div>` : ''}</div>`;
     }).join('');
     const ov = document.createElement('div');
-    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.18);backdrop-filter:none;-webkit-backdrop-filter:none;display:flex;align-items:center;justify-content:center';
     ov.innerHTML = '<style>@keyframes clSlUp{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}</style>'
       + '<div style="background:linear-gradient(160deg,#1a2a40,#0d1a2e);border:1px solid rgba(120,180,255,.4);border-radius:20px;padding:18px 20px;width:330px;max-width:92%;box-shadow:0 24px 60px rgba(0,0,0,.65);animation:clSlUp .18s ease;position:relative">'
       +   '<span id="wxClose" style="position:absolute;right:16px;top:12px;color:#7fa3c4;font-size:22px;cursor:pointer">\u00d7</span>'
@@ -2682,9 +3388,9 @@ class CasaLuna extends HTMLElement {
     const curAttr = this._attr(id, 'current_a') ?? this._attr(id, 'current');
     const energyAttr = this._attr(id, 'today_energy_kwh') ?? this._attr(id, 'energy_kwh');
     const metrics = [];
-    if (pwrAttr != null) metrics.push(['Power', `${(+pwrAttr).toFixed(0)} W`, '#5bc8ff']);
-    if (curAttr != null) metrics.push(['Current', `${(+curAttr).toFixed(2)} A`, '#5bc8ff']);
-    if (energyAttr != null) metrics.push(['Today', `${(+energyAttr).toFixed(2)} kWh`, '#ffd24a']);
+    if (pwrAttr != null) metrics.push(['Power', `${this._dec(pwrAttr)} W`, '#5bc8ff']);
+    if (curAttr != null) metrics.push(['Current', `${this._dec(curAttr)} A`, '#5bc8ff']);
+    if (energyAttr != null) metrics.push(['Today', `${this._dec(energyAttr)} kWh`, '#ffd24a']);
     if (lc != null) metrics.push([on ? 'On for' : 'Off for', this._durTime(lc), '#a8cae6']);
     if (lc != null) metrics.push(['Changed', this._relTime(lc), '#7fa3c4']);
     const metricRows = metrics.map(([l, v, col]) =>
@@ -2742,7 +3448,7 @@ class CasaLuna extends HTMLElement {
           <div class="bot-h">
             <div class="c-name">${esc(label)}</div>
             <div class="c-sub ${on ? 'sub-gr' : 'sub-off'}" style="display:block">${on ? 'On' : 'Off'}</div>
-            ${pwrAttr != null ? `<div class="socket-stat"><span class="socket-stat-lbl">POWER</span><span class="socket-stat-val">${(+pwrAttr).toFixed(0)} W</span></div>
+            ${pwrAttr != null ? `<div class="socket-stat"><span class="socket-stat-lbl">POWER</span><span class="socket-stat-val">${this._dec(pwrAttr)} W</span></div>
             <div class="socket-bar"><div class="socket-fill" style="width:${Math.min(100, (+pwrAttr) / 20)}%"></div></div>` : ''}
             <div class="spd-open-btn ${on ? 'fan-on' : ''}" id="tpSwToggle" style="margin-top:6px">${on ? 'Turn Off' : 'Turn On'}</div>
           </div>
@@ -2788,7 +3494,7 @@ class CasaLuna extends HTMLElement {
 
     const ov = document.createElement('div');
     ov.id = 'tilePopup';
-    ov.style.cssText = 'position:absolute;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55)';
+    ov.style.cssText = 'position:absolute;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.18)';
     ov.innerHTML = `<div style="min-width:300px;max-width:82%;background:rgba(10,20,38,.97);border:1.5px solid rgba(120,180,255,.4);border-radius:18px;padding:18px 20px;box-shadow:0 12px 44px rgba(0,0,0,.6)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <span style="color:#fff;font-size:15px;font-weight:700;letter-spacing:.04em">${esc(label.toUpperCase())}</span>
@@ -2969,7 +3675,7 @@ class CasaLuna extends HTMLElement {
   /* ═══════════════════════ UPDATE — live values (every hass change / 15s) ═══════════════════════ */
   _update(tick = false) {
     if (!this._built || !this._hass) return;
-    const c = this.config;
+    const c = this._lc || this.config;
     this._applyTheme();
 
     /* clock */
@@ -3003,16 +3709,16 @@ class CasaLuna extends HTMLElement {
        Magnitude only (direction/colour handled in _updateFlows from the same net). */
     const hasPhases = !!(c.grid_phase_a || c.grid_phase_b || c.grid_phase_c);
     const gridFlowW = Math.abs(this._gridNetW());
-    this._setTxt('#gridW', `${(gridFlowW / 1000).toFixed(2)} kW`);
+    this._setTxt('#gridW', `${this._dec(gridFlowW / 1000)} kW`);
     /* Battery flow-line top value now = battery POWER, colored to match flow (set in flow block below) */
     /* Below-line volts: grid volt (hidden when 3-phase on), battery volt (always shown) */
     const gridVoltEl = this.shadowRoot.getElementById('gridVolt');
     if (gridVoltEl) {
-      if (c._show_3phase && hasPhases) { gridVoltEl.setAttribute('opacity', '0'); }
+      if (c._show_phase && hasPhases) { gridVoltEl.setAttribute('opacity', '0'); }
       else {
         gridVoltEl.setAttribute('opacity', '1');
         const gv = this._num(c.grid_voltage, NaN);
-        gridVoltEl.textContent = Number.isFinite(gv) ? `${this._fmt(gv)} V` : '--';
+        gridVoltEl.textContent = Number.isFinite(gv) ? `${this._decEnt(c.grid_voltage)} V` : '--';
       }
     }
     /* Battery voltage now shown below the cylinder (inside cylinder box), pair when batt2 on */
@@ -3023,7 +3729,7 @@ class CasaLuna extends HTMLElement {
 
     /* EV banner values */
     if (c._show_ev) {
-      const evP = this._num(c.charger_power, NaN);
+      const evP = this._watts(c.charger_power, NaN);
       const evA = this._num(c.charger_current, NaN);
       const evS = this._num(c.charger_soc, NaN);
       this._setTxt('#evPowerVal', Number.isFinite(evP) ? (evP >= 1000 ? `${(evP/1000).toFixed(1)}k` : `${Math.round(evP)}`) : '--');
@@ -3036,8 +3742,8 @@ class CasaLuna extends HTMLElement {
     this._fillBar('pwr', loadW / Math.max(c.inverter_max_power, 1), '#0a8aea', 10);
 
     /* stat tiles */
-    const loadWatt = this._num(c.consump);
-    const tempColor = v => v >= c.thresh_temp_critical ? '#ff5040' : v >= c.thresh_temp_warn ? '#ffaa28' : '#ffaa28';
+    const loadRaw = this._num(c.consump, NaN);
+    const tempColor = v => v >= c.thresh_temp_critical ? '#ff5040' : v >= c.thresh_temp_warn ? '#ffaa28' : '#46e05a';
     /* GoodWe cell-temp quirk: raw reports 3.9 for 39°C. Auto-correct ×10 only when
        the entity id contains "goodwe"; any other system shows the raw value. */
     const cellTemp = (entId) => {
@@ -3051,19 +3757,28 @@ class CasaLuna extends HTMLElement {
     const cellTempV = Math.max(cellTemp(c.battery_temp1) || -Infinity, cellTemp(c.battery_temp2) || -Infinity);
     // LOAD tile
     const loadEl2 = this._q('#v_load');
-    if (loadEl2) { loadEl2.textContent = `${(loadWatt/1000).toFixed(2)} kW`; loadEl2.style.color = '#50c8ff'; }
+    if (loadEl2) {
+      if (!c.consump || !Number.isFinite(loadRaw)) {
+        loadEl2.textContent = '--';
+      } else {
+        const unit = (this._attr(c.consump, 'unit_of_measurement') || '').trim().toLowerCase();
+        const kwVal = unit === 'kw' ? loadRaw : loadRaw / 1000;
+        loadEl2.textContent = `${this._dec(kwVal)} kW`;
+      }
+      loadEl2.style.color = '#50c8ff';
+    }
     // GRID IMP / GRID EXP tiles
-    this._setTxt('#v_gimp', this._kwh(this._num(c.grid_import_today, NaN)));
+    this._setTxt('#v_gimp', this._kwhEnt(c.grid_import_today));
     this._setColor('#v_gimp', '#ffb45a');
-    this._setTxt('#v_gexp', c.grid_export_energy ? this._kwh(this._num(c.grid_export_energy, NaN)) : '--');
+    this._setTxt('#v_gexp', c.grid_export_energy ? this._kwhEnt(c.grid_export_energy) : '--');
     this._setColor('#v_gexp', '#7ce05a');
     // BATT CHG / DIS dual tile
-    this._setTxt('#v_bchg', this._kwh(this._num(c.today_batt_chg, NaN)));
-    this._setTxt('#v_bdis', this._kwh(this._num(c.batt_dis, NaN)));
+    this._setTxt('#v_bchg', this._kwhEnt(c.today_batt_chg));
+    this._setTxt('#v_bdis', this._kwhEnt(c.batt_dis));
 
     /* inverter */
     const invT = this._num(c.inv_temp, NaN);
-    this._setTxt('#invStatus', Number.isFinite(invT) ? `Temp: ${invT.toFixed(1)} °C` : 'Operating');
+    this._setTxt('#invStatus', Number.isFinite(invT) ? `Temp: ${this._decEnt(c.inv_temp)} °C` : 'Operating');
     const invErrSt = c.inverter_error ? this._st(c.inverter_error) : '';
     const errEl = this._q('#invErr');
     if (errEl) {
@@ -3072,8 +3787,8 @@ class CasaLuna extends HTMLElement {
       errEl.style.color = clean ? '#46e05a' : '#ff5040';
     }
     /* phase flip tile: front = grid phase pwr/volt, back = inverter pwr/volt (3 values each, no L1/L2 prefixes) */
-    const phaseVal = (id) => { const v = this._num(id, NaN); return Number.isFinite(v) ? `${Math.round(v)}` : '--'; };
-    const phaseKw = (id) => { const v = this._num(id, NaN); return Number.isFinite(v) ? `${(v / 1000).toFixed(2)}` : '--'; };
+    const phaseVal = (id) => { const v = this._num(id, NaN); return Number.isFinite(v) ? `${this._decEnt(id)}` : '--'; };
+    const phaseKw = (id) => { const v = this._watts(id, NaN); return Number.isFinite(v) ? `${this._dec(v / 1000)}` : '--'; };
     const setRow = (sel, vals) => { const el = this._q(sel); if (el) { const h = vals.map(v => `<span style="flex:1;text-align:center">${v}</span>`).join(''); if (el._h !== h) { el.innerHTML = h; el._h = h; } } };
     setRow('#phaseRowP', [phaseKw(c.grid_phase_a), phaseKw(c.grid_phase_b), phaseKw(c.grid_phase_c)]);
     setRow('#phaseRowV', [phaseVal(c.grid_phase_a_volt), phaseVal(c.grid_phase_b_volt), phaseVal(c.grid_phase_c_volt)]);
@@ -3112,15 +3827,17 @@ class CasaLuna extends HTMLElement {
     /* battery / mode / right column
        This user's sensor: positive bP = discharging, negative bP = charging
        (opposite of standard convention, so we invert the MODE text labels) */
-    const bP = this._num(c.battery_power) * (c.invert_battery_power ? -1 : 1);
+    const bP = this._watts(c.battery_power) * (c.invert_battery_power ? -1 : 1);
     let modeTxt = 'IDLE', modeCol = '#a8cae6';
     if (bP > 50)  { modeTxt = 'DISCHARGING'; modeCol = '#22c3ff'; }
     if (bP < -50) { modeTxt = 'CHARGING';    modeCol = '#46e05a'; }
     const mv = this._q('#modeVal');
-    if (mv) { mv.textContent = modeTxt; mv.style.color = modeCol; }
+    if (mv) { mv.textContent = this._t(modeTxt); mv.style.color = modeCol; }
     // inverter state (work_mode entity) — e.g. On-Grid / Off-Grid / Backup
-    const invSt = this._st(c.inverter_state);
-    this._setTxt('#invState', invSt ? this._cap(invSt) : '--');
+    const invSo = this._stateObj(c.inverter_state);
+    const invSt = invSo && this._hass.formatEntityState ? this._hass.formatEntityState(invSo)
+                : (invSo ? this._cap(invSo.state) : '');
+    this._setTxt('#invState', invSt || '--');
 
     // Khan-style battery fill — single or dual (split) cylinder
     if (c._show_battery2) {
@@ -3132,13 +3849,13 @@ class CasaLuna extends HTMLElement {
         if (fill && bf) { bf.setAttribute('y', fill.y); bf.setAttribute('height', fill.height); bf.setAttribute('fill', fill.color); bf.setAttribute('filter', fill.filter); }
         if (fill && bh) { bh.setAttribute('y', fill.y); bh.setAttribute('height', fill.height); }
         if (pct) { pct.textContent = Number.isFinite(socV) ? Math.round(socV) + '%' : '--%'; if (fill) pct.setAttribute('fill', fill.textColor); }
-        const bP = this._num(powEnt) * (c[invKey] ? -1 : 1);
+        const bP = this._watts(powEnt) * (c[invKey] ? -1 : 1);
         if (bolt) bolt.setAttribute('opacity', bP < -50 ? '1' : '0');
       };
       applyFill(soc1, '#battFillBar1', '#battFillHL1', '#cylPct1', '#battBoltGroup1', c.battery_power, 'invert_battery_power');
       applyFill(soc2, '#battFillBar2', '#battFillHL2', '#cylPct2', '#battBoltGroup2', c.battery2_power, 'invert_battery_power');
       const wrap = this._q('#battIconWrap');
-      const bPany = Math.abs(this._num(c.battery_power)) + Math.abs(this._num(c.battery2_power));
+      const bPany = Math.abs(this._watts(c.battery_power)) + Math.abs(this._watts(c.battery2_power));
       if (wrap) wrap.setAttribute('filter', bPany >= 50 ? 'url(#iconGlowBlue)' : '');
     } else {
       const soc = this._num(c.battery_soc, NaN);
@@ -3152,7 +3869,7 @@ class CasaLuna extends HTMLElement {
       }
       if (fill && bh) { bh.setAttribute('y', fill.y); bh.setAttribute('height', fill.height); }
       if (pct) { pct.textContent = Number.isFinite(soc) ? soc+'%' : '--%'; if (fill) pct.setAttribute('fill', fill.textColor); }
-      const bP = this._num(c.battery_power) * (c.invert_battery_power ? -1 : 1);
+      const bP = this._watts(c.battery_power) * (c.invert_battery_power ? -1 : 1);
       if (bolt) bolt.setAttribute('opacity', bP < -50 ? '1' : '0');
       if (wrap) wrap.setAttribute('filter', Math.abs(bP) >= 50 ? 'url(#iconGlowBlue)' : '');
     }
@@ -3178,10 +3895,16 @@ class CasaLuna extends HTMLElement {
       const mv = this._num(c.battery_mos, NaN);
       this._setColor('#bBms', Number.isFinite(mv) ? tempColor(mv) : '#eaf4ff');
       let mn = this._num(c.battery_min_cell, NaN), mx = this._num(c.battery_max_cell, NaN);
+      let mnRaw = this._st(c.battery_min_cell), mxRaw = this._st(c.battery_max_cell);
       /* guard: if sensors are swapped (min>max), display sorted low|high */
-      if (Number.isFinite(mn) && Number.isFinite(mx) && mn > mx) { const t = mn; mn = mx; mx = t; }
-      const mns = Number.isFinite(mn) ? mn.toFixed(3) : '--', mxs = Number.isFinite(mx) ? mx.toFixed(3) : '--';
+      if (Number.isFinite(mn) && Number.isFinite(mx) && mn > mx) { const t = mn; mn = mx; mx = t; const tr = mnRaw; mnRaw = mxRaw; mxRaw = tr; }
+      const mns = Number.isFinite(mn) ? this._dec(mnRaw) : '--', mxs = Number.isFinite(mx) ? this._dec(mxRaw) : '--';
       this._setTxt('#bCv', (Number.isFinite(mn) || Number.isFinite(mx)) ? `${mns} | ${mxs}` : '--');
+      /* cell-voltage health colour: red critical, orange low/high, green normal — worse of min/max wins */
+      const cvCrit = Number(c.thresh_cell_v_critical) || 3.0, cvLow = Number(c.thresh_cell_v_low) || 3.1, cvHigh = Number(c.thresh_cell_v_high) || 3.65;
+      const cellVColor = v => !Number.isFinite(v) ? null : v <= cvCrit ? 3 : (v <= cvLow || v >= cvHigh) ? 2 : 1;
+      const sev = Math.max(cellVColor(mn) || 0, cellVColor(mx) || 0);
+      this._setColor('#bCv', sev === 3 ? '#ff5040' : sev === 2 ? '#ffaa28' : sev === 1 ? '#7ce05a' : '#7ce05a');
     }
     const chgSum = this._num(c.today_batt_chg, NaN);
     /* Endurance (khan logic): driven by battery power, not house load.
@@ -3190,8 +3913,8 @@ class CasaLuna extends HTMLElement {
     let endHours = NaN, endText = '--', isETA = false;
     if (c._show_battery2) {
       const soc1 = this._num(c.battery_soc, NaN), soc2 = this._num(c.battery2_soc, NaN);
-      const p1 = this._num(c.battery_power) * (c.invert_battery_power ? -1 : 1);
-      const p2 = this._num(c.battery2_power) * (c.invert_battery_power ? -1 : 1);
+      const p1 = this._watts(c.battery_power) * (c.invert_battery_power ? -1 : 1);
+      const p2 = this._watts(c.battery2_power) * (c.invert_battery_power ? -1 : 1);
       const totalRemWh = (Number.isFinite(soc1) ? soc1 / 100 * fullWh1 : 0) + (Number.isFinite(soc2) ? soc2 / 100 * fullWh2 : 0);
       const totalCapWh = fullWh1 + fullWh2;
       const totalPower = p1 + p2;
@@ -3213,30 +3936,37 @@ class CasaLuna extends HTMLElement {
     const bELbl = this._q('#bELbl'); if (bELbl) bELbl.textContent = isETA ? 'ETA' : (c.label_endurance || 'Endurance');
     /* mirror condensed values to battery flip back face */
     const _mirror = (src, dst) => { const s = this._q(src), d = this._q(dst); if (s && d) { d.textContent = s.textContent; d.style.color = s.style.color || '#d8eeff'; } };
-    _mirror('#bCur', '#bCurB'); _mirror('#bC', '#bCB'); _mirror('#bE', '#bEB');
+    /* battery back face now shows PV strings (filled below) */
 
     /* production / consumption boxes */
-    this._setTxt('#prTotal', this._kwh(this._num(c.today_pv, NaN)));
-    const pvP = [c.pv1_power, c.pv2_power, c.pv3_power, c.pv4_power];
-    const pvV = [c.pv1_voltage, c.pv2_voltage, c.pv3_voltage, c.pv4_voltage];
-    /* match the tile build: only the strings that actually have an entity (min 2) */
-    let pvSlots = 0; const pvMax = c._show_pv_extra ? 4 : 2;
-    for (let i = 0; i < pvMax; i++) if (pvP[i]) pvSlots = i + 1;
-    pvSlots = Math.max(2, pvSlots);
+    this._setTxt('#prTotal', this._kwhEnt(c.today_pv));
+    const pvP = [c.pv1_power, c.pv2_power, c.pv3_power, c.pv4_power, c.pv5_power, c.pv6_power];
+    const pvV = [c.pv1_voltage, c.pv2_voltage, c.pv3_voltage, c.pv4_voltage, c.pv5_voltage, c.pv6_voltage];
+    /* match the tile build: only the strings that actually have an entity configured */
+    let pvSlots = 0; const pvMax = c._show_pv_extra ? 6 : 2;
+    for (let i = 0; i < pvMax; i++) if (pvP[i] && this._stateObj(pvP[i])) pvSlots = i + 1;
+    pvSlots = Math.max(1, pvSlots);
     for (let i = 0; i < pvSlots; i++) {
       const pEnt = pvP[i], vEnt = pvV[i];
       const pEl = this._q(`#prPc${i}`);
-      if (pEl) pEl.textContent = pEnt ? `${(this._num(pEnt) / 1000).toFixed(2)} kW` : '--';
+      if (pEl) pEl.textContent = pEnt ? `${this._dec(this._watts(pEnt) / 1000)} kW` : '--';
       const vEl = this._q(`#prVc${i}`);
-      if (vEl) vEl.textContent = vEnt ? `${Math.round(this._num(vEnt))} V` : '--';
+      if (vEl) vEl.textContent = vEnt ? `${this._decEnt(vEnt)} V` : '--';
     }
-    this._setTxt('#cnTotal', this._kwh(this._num(c.today_load, NaN)));
+    /* battery back face: all 6 PV strings (power + volt) */
+    for (let i = 0; i < 6; i++) {
+      const pe = this._q(`#bPV${i + 1}P`);
+      if (pe) pe.textContent = pvP[i] ? `${this._dec(this._watts(pvP[i]) / 1000)} kW` : '--';
+      const ve = this._q(`#bPV${i + 1}V`);
+      if (ve) ve.textContent = pvV[i] ? `${this._decEnt(pvV[i])} V` : '--';
+    }
+    this._setTxt('#cnTotal', this._kwhEnt(c.today_load));
     /* grid imp/exp now shown in middle tiles (#v_gimp / #v_gexp) */
     /* inverter summary tiles */
     const impTs = this._tileState('imp'), expTs = this._tileState('exp'), pvTs = this._tileState('pv');
-    this._setTxt('#itImp', impTs.custom ? this._rawTile(impTs.entity) : this._kwh(this._num(c.grid_import_today, NaN)));
-    this._setTxt('#itExp', expTs.custom ? this._rawTile(expTs.entity) : (c.grid_export_energy ? this._kwh(this._num(c.grid_export_energy, NaN)) : '--'));
-    this._setTxt('#itPv',  pvTs.custom ? this._rawTile(pvTs.entity) : this._kwh(this._num(c.total_pv, NaN)));
+    this._setTxt('#itImp', c.total_import ? this._kwhEnt(c.total_import) : '--');
+    this._setTxt('#itExp', c.total_export ? this._kwhEnt(c.total_export) : '--');
+    this._setTxt('#itPv',  pvTs.custom ? this._rawTile(pvTs.entity) : this._kwhEnt(c.total_pv));
     /* totals tiles → white when customized */
     ['imp','exp','pv'].forEach(k => { const ts=this._tileState(k); const el=this._q('#it'+(k==='imp'?'Imp':k==='exp'?'Exp':'Pv')); if(el&&ts.custom) el.style.color='#ffffff'; });
     if (c.history_charts) {
@@ -3265,24 +3995,28 @@ class CasaLuna extends HTMLElement {
   _gridNetW() {
     const c = this.config;
     const hasPhases = !!(c.grid_phase_a || c.grid_phase_b || c.grid_phase_c);
-    const v = (c._show_3phase && hasPhases)
-      ? this._num(c.grid_phase_a) + this._num(c.grid_phase_b) + this._num(c.grid_phase_c)
-      : this._num(c.grid_active_power);
+    const v = (c._show_phase && hasPhases)
+      ? this._watts(c.grid_phase_a) + this._watts(c.grid_phase_b) + this._watts(c.grid_phase_c)
+      : this._watts(c.grid_active_power);
     return v * (c.invert_grid_power ? -1 : 1);
   }
   /* combined inverter load: sum of L1/L2/L3 backup power when 3-phase is toggled on
      (and inverter phases set), else house consumption. Feeds INV LOAD % + PWR bar. */
   _invLoadW() {
     const c = this.config;
+    /* dedicated "this inverter's own output" entity takes priority — needed when other
+       PV inverters also feed the house directly, so total consumption isn't a fair
+       proxy for THIS inverter's load (e.g. Victron + separate AC-coupled PV inverters). */
+    if (c.inverter_output_power) return Math.abs(this._watts(c.inverter_output_power));
     const hasInv = !!(c.inv_l1_power || c.inv_l2_power || c.inv_l3_power);
-    return (c._show_3phase && hasInv)
-      ? Math.abs(this._num(c.inv_l1_power) + this._num(c.inv_l2_power) + this._num(c.inv_l3_power))
-      : this._num(c.consump);
+    return (c._show_phase && hasInv)
+      ? Math.abs(this._watts(c.inv_l1_power) + this._watts(c.inv_l2_power) + this._watts(c.inv_l3_power))
+      : this._watts(c.consump);
   }
 
   _updateFlows() {
     const c = this.config;
-      const bP  = this._num(c.battery_power) * (c.invert_battery_power ? -1 : 1);
+      const bP  = this._watts(c.battery_power) * (c.invert_battery_power ? -1 : 1);
       const gW  = this._gridNetW();
       const battActive = Math.abs(bP) > 50;
       const poleActive = Math.abs(gW) > 10;
@@ -3298,7 +4032,7 @@ class CasaLuna extends HTMLElement {
       const loadWel = this.shadowRoot.getElementById('loadW');
       if (loadWel) {
         const pw = Math.abs(bP);
-        loadWel.textContent = pw >= 1000 ? `${(pw/1000).toFixed(2)} kW` : `${Math.round(pw)} W`;
+        loadWel.textContent = pw >= 1000 ? `${this._dec(pw / 1000)} kW` : `${Math.round(pw)} W`;
         loadWel.setAttribute('fill', battCore);
       }
 
@@ -3329,7 +4063,7 @@ class CasaLuna extends HTMLElement {
       };
       /* battery: charging reverses dot flow (home→battery) */
       drive([['battHGlow',true],['battHCore',false],['battVGlow',true],['battVCore',false],['battDGlow',true],['battDCore',false]], battActive, battDur, battGlow, battCore, battCharging);
-      drive([['poleHGlow',true],['poleHCore',false],['poleVGlow',true],['poleVCore',false],['poleDGlow',true],['poleDCore',false]], poleActive, poleDur, poleGlow, poleCore);
+      drive([['poleHGlow',true],['poleHCore',false],['poleVGlow',true],['poleVCore',false],['poleDGlow',true],['poleDCore',false]], poleActive, poleDur, poleGlow, poleCore, gridExporting);
 
       // Battery dynamic arrow: discharging → house end (D); charging → battery end (A)
       const battArrD = this.shadowRoot.getElementById('battArrD');
@@ -3661,7 +4395,7 @@ class CasaLuna extends HTMLElement {
     // ── PV power bubble: floats just right of sun (skycard exact logic) ──
     const pvBubbleG = getEl('pvBubbleGroup');
     if (pvBubbleG) {
-      const pvKw = pvTotal >= 1000 ? (pvTotal / 1000).toFixed(2) + ' kW' : pvTotal.toFixed(0) + ' W';
+      const pvKw = pvTotal >= 1000 ? this._dec(pvTotal / 1000) + ' kW' : pvTotal.toFixed(0) + ' W';
       const pvShow = pvTotal > 10 && !sun.night;
       pvBubbleG.setAttribute('opacity', pvShow ? '1' : '0');
       if (pvShow) {
@@ -3897,6 +4631,10 @@ class CasaLunaEditor extends HTMLElement {
 
     const style = `<style>
       :host{display:block;font-family:var(--paper-font-body1_-_font-family,inherit)}
+      .ed-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px;align-items:start}
+      .ed-grid > .section{grid-column:auto}
+      .ed-grid > .section.wide{grid-column:1 / -1}
+      @media (max-width:760px){ .ed-grid{display:block} }
       .section{margin-bottom:14px;border:1px solid var(--divider-color,rgba(0,0,0,.12));border-radius:10px;overflow:hidden}
       .hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--secondary-background-color,rgba(0,0,0,.04));
         font-size:.82rem;font-weight:650;letter-spacing:.4px;text-transform:uppercase;color:var(--secondary-text-color);cursor:pointer;user-select:none}
@@ -3938,13 +4676,14 @@ class CasaLunaEditor extends HTMLElement {
     </style>`;
 
     const shell = document.createElement('div');
+    shell.className = 'ed-grid';
     shell.innerHTML = style;
 
     const section = (id, icon, title, rows, opts = {}) => {
       if (this._sectionOpen[id] === undefined) this._sectionOpen[id] = (id === 'general');
       const open = this._sectionOpen[id];
       const sec = document.createElement('div');
-      sec.className = opts.sub ? 'sub' : 'section';
+      sec.className = opts.sub ? 'sub' : (opts.wide ? 'section wide' : 'section');
       sec.dataset.sec = id;
       const hdr = document.createElement('div');
       hdr.className = 'hdr';
@@ -4153,6 +4892,7 @@ class CasaLunaEditor extends HTMLElement {
     };
 
     shell.appendChild(section('general', '⚙️', 'General', [
+      textField('title', 'Title', 'CASA LUNA'),
       textField('inverter_name', 'Inverter Name', 'e.g. My Inverter'),
       divider(),
       capGroup('Battery Capacity', 'battery_cap_unit', 'battery_full_ah', 'battery_full_wh'),
@@ -4162,8 +4902,17 @@ class CasaLunaEditor extends HTMLElement {
       numberField('inverter_max_power', 'Inverter Max Power', 0, 20000, 100, 'W'),
       divider(),
       numberField('lower_section_offset', 'Flow diagram vertical offset', -80, 80, 1, 'SVG units (− = up)'),
-      divider(),
-      switchRow('_show_bars', '📊 Show PV / PWR bars', 'Enable or disable both bottom capsule bars at once', true),
+    ]));
+
+    shell.appendChild(section('toggles', '🎚️', 'Toggles', [
+      info('Enable or disable cards. Disabled cards are hidden from the dashboard.'),
+      switchRow('_show_bars', '📊 PV / PWR bars', 'Both bottom capsule bars', true),
+      switchRow('_show_phase', '🔀 Phase / Inverter tile', 'Show the 3-phase + inverter tile (with flip)', true),
+      switchRow('_show_battstats', '🔋 Battery value tile', 'Show battery stats (flip → 6 PV strings)', true),
+      switchRow('_show_pvtile', '☀️ PV PWR/VOLT tile', 'Show the small PV power/voltage tile next to the battery', true),
+      switchRow('_show_pv_extra', '☀️ Extra PV strings', 'Enable PV3–PV6', false),
+      switchRow('_show_ev', '🚗 EV / car charger tile', 'Show the EV charger tile', false),
+      switchRow('_show_battery2', '🔋 Secondary battery', 'Enable a second battery pack', false),
     ]));
 
     shell.appendChild(section('weather', '☀️', 'Weather & Sun', [
@@ -4183,9 +4932,13 @@ class CasaLunaEditor extends HTMLElement {
       section('solar_extra', '➕', 'Extra PV Strings', [
         eg('pv3_power', 'PV3 POWER'),
         eg('pv4_power', 'PV4 POWER'),
+        eg('pv5_power', 'PV5 POWER'),
+        eg('pv6_power', 'PV6 POWER'),
         eg('pv3_voltage', 'PV3 VOLT'),
         eg('pv4_voltage', 'PV4 VOLT'),
-      ], { sub: true, toggleKey: '_show_pv_extra', toggleOn: !!cfg._show_pv_extra, hidden: !cfg._show_pv_extra }),
+        eg('pv5_voltage', 'PV5 VOLT'),
+        eg('pv6_voltage', 'PV6 VOLT'),
+      ], { sub: true }),
     ]));
 
     shell.appendChild(section('grid', '🔌', 'Grid', [
@@ -4202,7 +4955,7 @@ class CasaLunaEditor extends HTMLElement {
         eg('grid_phase_b_volt', 'L2 VOLT'),
         eg('grid_phase_c', 'PHASE L3'),
         eg('grid_phase_c_volt', 'L3 VOLT'),
-      ], { sub: true, toggleKey: '_show_3phase', toggleOn: !!cfg._show_3phase, hidden: !cfg._show_3phase }),
+      ], { sub: true }),
     ]));
 
     shell.appendChild(section('phaseflip', '🔄', 'Phase / Inverter Tile', [
@@ -4216,6 +4969,9 @@ class CasaLunaEditor extends HTMLElement {
       eg('inv_l1_volt', 'Inverter L1 Volt'),
       eg('inv_l2_volt', 'Inverter L2 Volt'),
       eg('inv_l3_volt', 'Inverter L3 Volt'),
+      divider(),
+      info('Optional — for hybrid setups where other inverters also feed the house directly. If set, INV LOAD % uses this inverter\'s own output instead of total house consumption.'),
+      eg('inverter_output_power', 'Inverter Output Power'),
     ]));
 
     shell.appendChild(section('battery', '🔋', 'Battery', [
@@ -4238,7 +4994,7 @@ class CasaLunaEditor extends HTMLElement {
         eg('battery2_current', 'BATT2 CURRENT'),
         eg('battery2_voltage', 'BATT2 VOLT'),
         eg('battery2_mos', 'BATT2 BMS'),
-      ], { sub: true, toggleKey: '_show_battery2', toggleOn: !!cfg._show_battery2, hidden: !cfg._show_battery2 }),
+      ], { sub: true }),
     ]));
 
     shell.appendChild(section('inverter', '🔄', 'Inverter', [
@@ -4251,9 +5007,18 @@ class CasaLunaEditor extends HTMLElement {
     shell.appendChild(section('solar_extras', '📊', 'Energy Today', [
       eg('today_pv', "TODAY'S PV"),
       eg('total_pv', 'TOTAL PV (lifetime)'),
+      eg('total_import', 'TOTAL IMPORT (lifetime)'),
+      eg('total_export', 'TOTAL EXPORT (lifetime)'),
       eg('today_batt_chg', 'BATT CHARGE'),
       eg('batt_dis', 'Batt Discharge'),
       eg('today_load', "TODAY'S LOAD"),
+      divider(),
+      info('Captions for the bottom totals tiles.'),
+      textField('label_total_imp', 'Total Import — caption', 'TOTAL IMP'),
+      textField('label_total_exp', 'Total Export — caption', 'TOTAL EXP'),
+      textField('label_chg_dis', 'Charge/Discharge — caption', 'CHG / DIS'),
+      textField('label_today_consumption', "Today's Consumption — caption", "TODAY'S CONSUMPTION"),
+      textField('label_today_production', "Today's Production — caption", "TODAY'S PRODUCTION"),
     ]));
 
     shell.appendChild(section('ev', '🚗', 'EV / Car Charger', [
@@ -4263,7 +5028,7 @@ class CasaLunaEditor extends HTMLElement {
       eg('charger_soc', 'CAR SOC'),
       eg('charger_eta', 'CHARGE ETA'),
       numberField('charger_battery_capacity_wh', 'EV Battery Capacity', 0, 200000, 1, 'Wh'),
-    ], { toggleKey: '_show_ev', toggleOn: !!cfg._show_ev, hidden: !cfg._show_ev }));
+    ]));
 
     /* Bottom 6 tiles — each its own subsection with enable toggle */
     const bottomRows = [];
@@ -4375,9 +5140,20 @@ class CasaLunaEditor extends HTMLElement {
       picker('en_ems_power', 'EMS power (number)', true),
       picker('en_grid_switch', 'Grid switch (Tuya)', true),
       picker('en_sync_time', 'Sync time (button)', true),
-    ]));
+    ], { wide: true }));
+
+    shell.appendChild(section('nav_plugs', '🔌', 'Smart Plugs View', [
+      info('Smart plugs — pick a switch, optionally name it and add a power sensor. Tap a plug tile to toggle. Empty slots are hidden.'),
+      picker('plug_1_entity', 'Plug 1', true), textField('plug_1_name', 'Plug 1 — name'), picker('plug_1_power', 'Plug 1 — power', true),
+      picker('plug_2_entity', 'Plug 2', true), textField('plug_2_name', 'Plug 2 — name'), picker('plug_2_power', 'Plug 2 — power', true),
+      picker('plug_3_entity', 'Plug 3', true), textField('plug_3_name', 'Plug 3 — name'), picker('plug_3_power', 'Plug 3 — power', true),
+      picker('plug_4_entity', 'Plug 4', true), textField('plug_4_name', 'Plug 4 — name'), picker('plug_4_power', 'Plug 4 — power', true),
+      picker('plug_5_entity', 'Plug 5', true), textField('plug_5_name', 'Plug 5 — name'), picker('plug_5_power', 'Plug 5 — power', true),
+      picker('plug_6_entity', 'Plug 6', true), textField('plug_6_name', 'Plug 6 — name'), picker('plug_6_power', 'Plug 6 — power', true),
+    ], { wide: true }));
 
     shell.appendChild(section('nav_battery', '🔋', 'Battery View', [
+      info('These are separate from the main General/Battery section above. Leave blank to automatically use the same entities as the main battery box.'),
       picker('bat_soc', 'State of Charge', true), picker('bat_voltage', 'Voltage', true),
       picker('bat_current', 'Current', true), picker('bat_power', 'Power', true),
       picker('bat_remain', 'Remaining', true),
@@ -4392,25 +5168,48 @@ class CasaLunaEditor extends HTMLElement {
 
     shell.appendChild(section('nav_climate', '🌡️', 'Climate View', [
       switchRow('auto_discover_climate', 'Auto-discover', 'Show all climate.* + temp/humidity sensors automatically (ignores manual picks below).'),
-      picker('clim_ac', 'AC (climate)', true),
-      picker('clim_fridge_temp', 'Fridge Temp', true), picker('clim_fridge_door', 'Fridge Door', true),
-      picker('clim_fridge_power', 'Fridge Power', true),
-      picker('clim_ambient', 'Room Temp', true), picker('clim_humidity', 'Humidity', true),
-      picker('clim_lux', 'Light Level', true),
+      info('Pick an entity and optionally give it a custom name. Empty slots are hidden.'),
+      picker('clim_ac', 'AC (climate)', true), textField('clim_ac_name', 'AC — name', 'AC'),
+      picker('clim_fridge_temp', 'Fridge Temp', true), textField('clim_fridge_temp_name', 'Fridge Temp — name', 'Fridge'),
+      picker('clim_fridge_door', 'Fridge Door', true), textField('clim_fridge_door_name', 'Fridge Door — name', 'Door'),
+      picker('clim_fridge_power', 'Fridge Power', true), textField('clim_fridge_power_name', 'Fridge Power — name', 'Power'),
+      picker('clim_ambient', 'Room Temp', true), textField('clim_ambient_name', 'Room Temp — name', 'Room'),
+      picker('clim_humidity', 'Humidity', true), textField('clim_humidity_name', 'Humidity — name', 'Humidity'),
+      picker('clim_lux', 'Light Level', true), textField('clim_lux_name', 'Light Level — name', 'Lux'),
       picker('clim_window_ac', 'Window→AC off (switch)', true),
       picker('clim_schedule', 'AC schedule (switch)', true),
-    ]));
+      divider(),
+      info('Extra entities (rooms, sensors). Pick + name each; leave empty to skip.'),
+      picker('clim_extra_1_entity', 'Extra 1', true), textField('clim_extra_1_name', 'Extra 1 — name'),
+      picker('clim_extra_2_entity', 'Extra 2', true), textField('clim_extra_2_name', 'Extra 2 — name'),
+      picker('clim_extra_3_entity', 'Extra 3', true), textField('clim_extra_3_name', 'Extra 3 — name'),
+      picker('clim_extra_4_entity', 'Extra 4', true), textField('clim_extra_4_name', 'Extra 4 — name'),
+      picker('clim_extra_5_entity', 'Extra 5', true), textField('clim_extra_5_name', 'Extra 5 — name'),
+      picker('clim_extra_6_entity', 'Extra 6', true), textField('clim_extra_6_name', 'Extra 6 — name'),
+    ], { wide: true }));
 
     shell.appendChild(section('nav_security', '🛡️', 'Security View', [
       switchRow('auto_discover_security', 'Auto-discover', 'Show all cameras + gas/smoke/motion/door binary_sensors automatically.'),
-      picker('sec_flame', 'Flame', true), picker('sec_gas_analog', 'Gas (analog)', true),
-      picker('sec_gas_digital', 'Gas Alert', true), picker('sec_motion', 'Motion', true),
-      picker('sec_door1', 'Front Door', true), picker('sec_window1', 'Window', true),
+      info('Pick + name each. Empty slots are hidden.'),
+      picker('sec_flame', 'Flame', true), textField('sec_flame_name', 'Flame — name', 'Flame'),
+      picker('sec_gas_analog', 'Gas (analog)', true), textField('sec_gas_analog_name', 'Gas — name', 'Gas'),
+      picker('sec_gas_digital', 'Gas Alert', true), textField('sec_gas_digital_name', 'Gas Alert — name', 'Gas Alert'),
+      picker('sec_motion', 'Motion', true), textField('sec_motion_name', 'Motion — name', 'Motion'),
+      picker('sec_door1', 'Front Door', true), textField('sec_door1_name', 'Front Door — name', 'Front Door'),
+      picker('sec_window1', 'Window', true), textField('sec_window1_name', 'Window — name', 'Window'),
       picker('sec_scene_arm', 'Arm Away (scene)', true),
       picker('sec_scene_disarm', 'Disarm (scene)', true),
       picker('sec_scene_night', 'Night (scene)', true),
       picker('sec_motion_alert', 'Motion alert (switch)', true),
-    ]));
+      divider(),
+      info('Extra entities. Pick + name each; leave empty to skip.'),
+      picker('sec_extra_1_entity', 'Extra 1', true), textField('sec_extra_1_name', 'Extra 1 — name'),
+      picker('sec_extra_2_entity', 'Extra 2', true), textField('sec_extra_2_name', 'Extra 2 — name'),
+      picker('sec_extra_3_entity', 'Extra 3', true), textField('sec_extra_3_name', 'Extra 3 — name'),
+      picker('sec_extra_4_entity', 'Extra 4', true), textField('sec_extra_4_name', 'Extra 4 — name'),
+      picker('sec_extra_5_entity', 'Extra 5', true), textField('sec_extra_5_name', 'Extra 5 — name'),
+      picker('sec_extra_6_entity', 'Extra 6', true), textField('sec_extra_6_name', 'Extra 6 — name'),
+    ], { wide: true }));
 
     shell.appendChild(section('nav_automation', '⚙️', 'Automation View', [
       switchRow('auto_discover_automation', 'Auto-discover', 'Show all scenes + automations + switches + helpers automatically.'),
@@ -4422,8 +5221,19 @@ class CasaLunaEditor extends HTMLElement {
       picker('auto_scene_party', 'Party (scene)', true),
       picker('auto_scene_home', 'Home (scene)', true),
       divider(),
-      picker('auto_relay1', 'Relay 1', true), picker('auto_relay2', 'Relay 2', true),
-      picker('auto_relay3', 'Relay 3', true), picker('auto_relay4', 'Relay 4', true),
+      info('Relays — pick + rename each. Empty slots are hidden.'),
+      picker('auto_relay1', 'Relay 1', true), textField('auto_relay1_name', 'Relay 1 — name', 'Relay 1'),
+      picker('auto_relay2', 'Relay 2', true), textField('auto_relay2_name', 'Relay 2 — name', 'Relay 2'),
+      picker('auto_relay3', 'Relay 3', true), textField('auto_relay3_name', 'Relay 3 — name', 'Relay 3'),
+      picker('auto_relay4', 'Relay 4', true), textField('auto_relay4_name', 'Relay 4 — name', 'Relay 4'),
+      divider(),
+      info('Extra switches/automations. Pick + name each; leave empty to skip.'),
+      picker('auto_extra_1_entity', 'Extra 1', true), textField('auto_extra_1_name', 'Extra 1 — name'),
+      picker('auto_extra_2_entity', 'Extra 2', true), textField('auto_extra_2_name', 'Extra 2 — name'),
+      picker('auto_extra_3_entity', 'Extra 3', true), textField('auto_extra_3_name', 'Extra 3 — name'),
+      picker('auto_extra_4_entity', 'Extra 4', true), textField('auto_extra_4_name', 'Extra 4 — name'),
+      picker('auto_extra_5_entity', 'Extra 5', true), textField('auto_extra_5_name', 'Extra 5 — name'),
+      picker('auto_extra_6_entity', 'Extra 6', true), textField('auto_extra_6_name', 'Extra 6 — name'),
       divider(),
       picker('auto_motion_lights', 'Motion lights (automation)', true),
       picker('auto_sunset_lights', 'Sunset lights (automation)', true),
@@ -4445,18 +5255,27 @@ class CasaLunaEditor extends HTMLElement {
       picker('tuya_sw2_on', 'Outlet 2 ON time (input_datetime)', true),
       picker('tuya_sw2_off', 'Outlet 2 OFF time (input_datetime)', true),
       picker('tuya_sw2_timer', 'Outlet 2 timer enable (input_boolean)', true),
-    ]));
+    ], { wide: true }));
 
     shell.appendChild(section('nav_lighting', '💡', 'Lighting View', [
       switchRow('auto_discover_lighting', 'Auto-discover', 'Show all light.* entities automatically (each with brightness).'),
-      picker('light1', 'Light 1 (Living Room)', true),
-      picker('light2', 'Light 2 (Bedroom)', true),
-      picker('light3', 'Light 3 (Kitchen)', true),
-      picker('light_zigbee', 'Zigbee Light', true),
+      info('Pick + name each. Empty slots are hidden.'),
+      picker('light1', 'Light 1 (Living Room)', true), textField('light1_name', 'Light 1 — name', 'Living Room'),
+      picker('light2', 'Light 2 (Bedroom)', true), textField('light2_name', 'Light 2 — name', 'Bedroom'),
+      picker('light3', 'Light 3 (Kitchen)', true), textField('light3_name', 'Light 3 — name', 'Kitchen'),
+      picker('light_zigbee', 'Zigbee Light', true), textField('light_zigbee_name', 'Zigbee Light — name', 'Zigbee Light'),
       picker('light_all_on', 'All On (script)', true),
       picker('light_all_off', 'All Off (script)', true),
       picker('light_adaptive', 'Adaptive lighting (switch)', true),
-    ]));
+      divider(),
+      info('Extra lights. Pick + name each; leave empty to skip.'),
+      picker('light_extra_1_entity', 'Extra 1', true), textField('light_extra_1_name', 'Extra 1 — name'),
+      picker('light_extra_2_entity', 'Extra 2', true), textField('light_extra_2_name', 'Extra 2 — name'),
+      picker('light_extra_3_entity', 'Extra 3', true), textField('light_extra_3_name', 'Extra 3 — name'),
+      picker('light_extra_4_entity', 'Extra 4', true), textField('light_extra_4_name', 'Extra 4 — name'),
+      picker('light_extra_5_entity', 'Extra 5', true), textField('light_extra_5_name', 'Extra 5 — name'),
+      picker('light_extra_6_entity', 'Extra 6', true), textField('light_extra_6_name', 'Extra 6 — name'),
+    ], { wide: true }));
 
     shell.appendChild(section('recent_events', '📋', 'Recent Events', [
       info('Entities watched in the Recent Events box (sorted by most-recent change). Leave empty to auto-show automations + motion/door/safety sensors.'),
