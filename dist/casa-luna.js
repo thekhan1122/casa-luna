@@ -1,4 +1,4 @@
-// v1.0.0 · build no.70
+// v1.0.0 · build no.87
 /* ════════════════════════════════════════════════════════════════════
    casa-luna.js — Casa Luna Edition · by The Khan
    Custom element: <casa-luna>  (renamed from khan-skycard to avoid
@@ -559,6 +559,24 @@ const icon = (k, s = 30) =>
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 /* shared raised-tile shadow with a coloured inner glow (g = "r,g,b") — used by nav + stat tiles */
 const glowShadow = g => `inset 0 1px 0 rgba(120,210,255,.28),inset 0 -1px 0 rgba(0,0,0,.6),0 4px 20px rgba(0,0,0,.65),inset 0 0 40px rgba(${g},.05)`;
+/* config keys whose value must be a number — guards against YAML authored with a
+   quoted value (e.g. thresh_temp_warn: "40") so downstream code can rely on the type
+   instead of every call site re-coercing defensively. Coerced once in setConfig(). */
+const NUMERIC_CONFIG_KEYS = [
+  'battery_full_ah', 'battery_full_wh', 'battery2_full_ah', 'battery2_full_wh',
+  'inverter_max_power', 'pv_max_power', 'lower_section_offset', 'charger_battery_capacity_wh',
+  'thresh_temp_warn', 'thresh_temp_critical', 'thresh_cell_v_low', 'thresh_cell_v_critical', 'thresh_cell_v_high',
+  'thresh_soc_low', 'thresh_soc_critical', 'thresh_load_warn', 'thresh_load_critical',
+  'thresh_endurance_low', 'thresh_endurance_crit',
+  'sz_soc', 'sz_mode', 'sz_invstate', 'ui_bg_opacity', 'ui_blur', 'edge_dim_opacity', 'sz_flow_power', 'sz_flow_volt',
+  'sz_batbox_label', 'sz_batbox_value', 'sz_tile_label', 'sz_tile_value', 'sz_prodcons_total',
+  'sz_pvtile', 'sz_bottile_label', 'sz_bottile_value', 'sz_totals_value', 'sz_invload',
+];
+
+/* recognized HA domains — used by the hass-update dirty-check to find entity-id-shaped
+   config values regardless of key naming (config has no consistent *_entity suffix). */
+const HA_DOMAINS = /^(sensor|binary_sensor|switch|light|climate|sun|weather|camera|automation|scene|script|input_boolean|input_datetime|input_number|input_select|input_text|person|device_tracker|cover|fan|lock|alarm_control_panel|media_player|water_heater|vacuum|humidifier|number|select|button|group|zone|timer|counter|proximity)\./;
+
 const NAV_VIEWS = [
   ['dashboard',  'DASHBOARD',  'Home',                  'home'],
   ['energy',     'ENERGY',     'Production & Flow',     'bolt'],
@@ -647,8 +665,9 @@ class CasaLuna extends HTMLElement {
       /* —— additive (new in casa-luna) —— */
       title: 'CASA LUNA',
       background_path: '/local/community/casa-luna/sky',
-      edge_dim: true,
+      edge_dim_opacity: 100,
       history_charts: true,
+      _show_advanced: false,
       cell_temp_x10: false,
       camera_stream_base: '',
       /* per-view auto-discovery toggles (OFF = manual entity picks; ON = scan hass by device_class) */
@@ -727,7 +746,7 @@ class CasaLuna extends HTMLElement {
       calendar_entities: [],
       sys_cpu: '', sys_memory: '', sys_disk: '', sys_uptime: '',
       /* per-element font sizes (px) — default to current values; editor lets user resize */
-      sz_soc: 21, sz_mode: 17, sz_invstate: 13,
+      sz_soc: 21, sz_mode: 17, sz_invstate: 9,
       ui_bg_color: '#000000', ui_bg_opacity: 35, ui_blur: 9,
       sz_flow_power: 16, sz_flow_volt: 13,
       sz_batbox_label: 12, sz_batbox_value: 17,
@@ -736,32 +755,11 @@ class CasaLuna extends HTMLElement {
       sz_bottile_label: 12, sz_bottile_value: 15,
       sz_totals_value: 16, sz_invload: 22,
       /* —— per-entity labels (customizable via ✏️ in each section) —— */
-      label_pv1_power: 'PV1 POWER', label_pv2_power: 'PV2 POWER',
-      label_pv3_power: 'PV3 POWER', label_pv4_power: 'PV4 POWER', label_pv5_power: 'PV5 POWER', label_pv6_power: 'PV6 POWER',
-      label_pv_total_power: 'PV TOTAL', label_pv1_voltage: 'PV1 VOLT',
-      label_weather_entity: 'WEATHER', label_weather_temp_entity: 'TEMPERATURE',
-      label_weather_wind_entity: 'WIND SPEED', label_weather_dir_entity: 'WIND DIR', label_sun: 'SUN',
-      label_pv2_voltage: 'PV2 VOLT', label_pv3_voltage: 'PV3 VOLT', label_pv4_voltage: 'PV4 VOLT', label_pv5_voltage: 'PV5 VOLT', label_pv6_voltage: 'PV6 VOLT',
-      label_grid_active_power: 'GRID POWER', label_grid_voltage: 'GRID VOLT',
       label_grid_import_today: 'GRID IMPORT', label_grid_export_energy: 'GRID EXPORT',
       label_consump: 'LOAD',
-      label_grid_phase_a: 'PHASE L1', label_grid_phase_b: 'PHASE L2', label_grid_phase_c: 'PHASE L3',
-      label_grid_phase_a_volt: 'L1 VOLT', label_grid_phase_b_volt: 'L2 VOLT', label_grid_phase_c_volt: 'L3 VOLT',
-      label_battery_soc: 'BATTERY SOC', label_battery_power: 'BATTERY POWER',
-      label_battery_current: 'BATTERY CURRENT', label_battery_voltage: 'BATTERY VOLT',
-      label_battery_temp1: 'TEMP 1', label_battery_temp2: 'TEMP 2',
-      label_battery_mos2: 'BMS TEMP',
-      label_battery_min_cell: 'MIN CELL', label_battery_max_cell: 'MAX CELL',
-      label_batt_dis: 'Batt Discharge',
-      label_battery2_soc: 'BATT2 SOC', label_battery2_power: 'BATT2 POWER',
-      label_battery2_current: 'BATT2 CURRENT', label_battery2_voltage: 'BATT2 VOLT', label_battery2_mos: 'BATT2 BMS',
-      label_inv_temp: 'INVERTER TEMP',
-      label_today_pv: "TODAY'S PV", label_today_load: "TODAY'S LOAD", label_today_batt_chg: 'BATT CHARGE',
       label_total_pv: 'TOTAL PV', label_inverter_state: 'INV STATE',
       label_today_consumption: "TODAY'S CONSUMPTION", label_today_production: "TODAY'S PRODUCTION",
       label_total_imp: 'TOTAL IMP', label_total_exp: 'TOTAL EXP', label_chg_dis: 'CHG / DIS',
-      label_charger_state: 'CHARGER STATE', label_charger_power: 'CHARGER POWER',
-      label_charger_current: 'CHARGER CURRENT', label_charger_soc: 'CAR SOC', label_charger_eta: 'CHARGE ETA',
     };
   }
 
@@ -787,23 +785,94 @@ class CasaLuna extends HTMLElement {
   }
 
   setConfig(config) {
-    this.config = { ...CasaLuna.getStubConfig(), ...config };
+    const stub = CasaLuna.getStubConfig();
+    const merged = { ...stub, ...config };
+    /* type guard: a hand-written YAML value like thresh_temp_warn: "40" (string) would
+       otherwise silently rely on JS's loose comparison coercion everywhere it's read —
+       fine today (only comparisons), but fragile if future code ever does arithmetic
+       on these. Normalize once here instead. */
+    for (const k of NUMERIC_CONFIG_KEYS) {
+      const n = Number(merged[k]);
+      merged[k] = Number.isFinite(n) ? n : stub[k];
+    }
+    this.config = merged;
     this._built = false;
     if (this._hass) this._build();
+  }
+
+  /* —— BUILD 1: render dirty-check ——
+     HA pushes a new hass object on every state change anywhere in the system,
+     not just for entities this card uses. Without a guard, _update() runs a
+     full pass on every unrelated push too. Discover this card's entity-id-shaped
+     config values by domain pattern (works regardless of key naming) and skip
+     _update() when none of their state/last_updated has changed. */
+  _watchedEntityIds() {
+    if (this._watchedIdsCache && this._watchedIdsCacheConfig === this.config) return this._watchedIdsCache;
+    const ids = new Set();
+    const scan = v => { if (typeof v === 'string' && HA_DOMAINS.test(v)) ids.add(v); };
+    for (const v of Object.values(this.config || {})) {
+      if (Array.isArray(v)) v.forEach(scan); else scan(v);
+    }
+    this._watchedIdsCache = ids;
+    this._watchedIdsCacheConfig = this.config;
+    return ids;
+  }
+  _entitiesSignature() {
+    const states = this._hass?.states;
+    if (!states) return '';
+    let sig = '';
+    for (const id of this._watchedEntityIds()) {
+      const s = states[id];
+      sig += id + ':' + (s ? (s.last_updated || s.state) : '\u2205') + '|';
+    }
+    return sig;
   }
 
   set hass(hass) {
     this._hass = hass;
     if (!this.config) return;
     if (this.config._demo_mode) this._wrapDemoServices();
-    if (!this._built && !this._locked) this._build();
+    const freshBuild = !this._built && !this._locked;
+    if (freshBuild) this._build();
+    if (!freshBuild && this._built && !this.config._demo_mode) {
+      const sig = this._entitiesSignature();
+      if (sig === this._lastEntitiesSig) return;
+      this._lastEntitiesSig = sig;
+    } else {
+      this._lastEntitiesSig = this._entitiesSignature();
+    }
     this._update();
   }
 
   connectedCallback() {
+    /* self-heal: remove any overlay left behind by a previous instance that didn't get
+       a clean disconnectedCallback (e.g. tab/iframe torn down abnormally) — see _hostOverlay */
+    document.querySelectorAll('.cl-overlay').forEach(n => { if (!(this._overlays || []).includes(n)) n.remove(); });
     this._clock = setInterval(() => { if (this._hass) this._update(true); }, 15000);
+    /* BUILD 3: pause all animation on screen-off/tab-hidden, resume + resync on return.
+       Wall tablet sits idle most of the day — SMIL/CSS animations otherwise run 24/7
+       regardless of whether anyone can see them. */
+    this._visHandler = () => this._onVisibilityChange();
+    document.addEventListener('visibilitychange', this._visHandler);
+    if (document.hidden) this._onVisibilityChange();
   }
-  disconnectedCallback() { clearInterval(this._clock); (this._overlays || []).forEach(n => n.remove()); this._overlays = []; }
+  disconnectedCallback() {
+    clearInterval(this._clock);
+    if (this._visHandler) document.removeEventListener('visibilitychange', this._visHandler);
+    (this._overlays || []).forEach(n => n.remove()); this._overlays = [];
+  }
+  _onVisibilityChange() {
+    if (document.hidden) {
+      clearInterval(this._clock); this._clock = null;
+      this.classList.add('cl-paused');
+      this.shadowRoot.querySelectorAll('svg').forEach(svg => { try { svg.pauseAnimations && svg.pauseAnimations(); } catch (e) {} });
+    } else {
+      if (!this._clock) this._clock = setInterval(() => { if (this._hass) this._update(true); }, 15000);
+      this.classList.remove('cl-paused');
+      this.shadowRoot.querySelectorAll('svg').forEach(svg => { try { svg.unpauseAnimations && svg.unpauseAnimations(); } catch (e) {} });
+      if (this._hass) this._update(true); // resync anything that changed while paused
+    }
+  }
 
   /* ── global theme: drive box background tint/opacity + blur from config via
      CSS custom properties on the host (inherited into the shadow tree). ── */
@@ -943,29 +1012,30 @@ class CasaLuna extends HTMLElement {
   }
   _fmt(v) { return this._dec(v); }
 
-  /* The 7 customizable tiles. Each maps to the EXISTING editor controls:
-     entityKey = the entity the editor already edits; labelKey = its label_ key.
-     Fallback to raw when BOTH the label and the entity differ from default. */
+  /* The 7 customizable tiles. entityKey = the entity the editor already edits;
+     defEntity = its original default, compared against to decide raw-vs-formatted display. */
   /* ═══════════════════════ TILE / ENTITY CONFIG HELPERS ═══════════════════════ */
   _TILES() {
     return {
-      load:  { defLabel:'LOAD',        defEntity:'sensor.goodwe_house_consumption',     labelKey:'label_consump',          entityKey:'consump'           },
-      ctmp:  { defLabel:'TEMP 1',      defEntity:'sensor.jk_temp1',                     labelKey:'label_battery_temp1',    entityKey:'battery_temp1'     },
-      bms:   { defLabel:'BMS TEMP',    defEntity:'sensor.jk_mos',                       labelKey:'label_battery_mos2',     entityKey:'battery_mos'       },
-      cellv: { defLabel:'MIN CELL',    defEntity:'sensor.jk_cellmin',                   labelKey:'label_battery_min_cell', entityKey:'battery_min_cell'  },
-      imp:   { defLabel:'GRID IMPORT', defEntity:'sensor.goodwe_today_energy_import',   labelKey:'label_grid_import_today',entityKey:'grid_import_today' },
-      exp:   { defLabel:'GRID EXPORT', defEntity:'sensor.goodwe_today_energy_export',   labelKey:'label_grid_export_energy',entityKey:'grid_export_energy'},
-      pv:    { defLabel:'TOTAL PV',  defEntity:'sensor.goodwe_total_pv_generation', labelKey:'label_total_pv',         entityKey:'total_pv'          },
+      load:  { defEntity:'sensor.goodwe_house_consumption',     entityKey:'consump'           },
+      ctmp:  { defEntity:'sensor.jk_temp1',                     entityKey:'battery_temp1'     },
+      bms:   { defEntity:'sensor.jk_mos',                       entityKey:'battery_mos'       },
+      cellv: { defEntity:'sensor.jk_cellmin',                   entityKey:'battery_min_cell'  },
+      imp:   { defEntity:'sensor.goodwe_today_energy_import',   entityKey:'grid_import_today' },
+      exp:   { defEntity:'sensor.goodwe_today_energy_export',   entityKey:'grid_export_energy'},
+      pv:    { defEntity:'sensor.goodwe_total_pv_generation',   entityKey:'total_pv'          },
     };
   }
-  /* custom=true when BOTH label and entity changed from default */
+  /* custom=true whenever the entity differs from default — switches that tile to raw
+     display (entity's own unit/sign, via _rawTile) instead of forced kWh formatting.
+     Previously required the label to ALSO be changed, which meant pointing the tile
+     at a different entity alone could show wrongly-formatted (or blank) values until
+     the caption was edited too. Entity choice alone now drives correct formatting. */
   _tileState(key) {
     const c = this.config, t = this._TILES()[key];
-    const curLabel = c[t.labelKey] !== undefined ? c[t.labelKey] : t.defLabel;
-    const curEnt   = c[t.entityKey] || '';
-    const labelChanged  = String(curLabel).trim() !== t.defLabel;
+    const curEnt = c[t.entityKey] || '';
     const entityChanged = !!curEnt && curEnt !== t.defEntity;
-    return { custom: labelChanged && entityChanged, entity: curEnt };
+    return { custom: entityChanged, entity: curEnt };
   }
   /* raw display string for a fallen-back tile: 1-decimal numeric (+unit), or text state, or '--' */
   _rawTile(entId) {
@@ -985,7 +1055,27 @@ class CasaLuna extends HTMLElement {
     return `${this._decEnt(id)} ${unit}`;
   }
   _cap(s) { return String(s).replace(/_/g, ' ').replace(/\b\w/g, m => m.toUpperCase()); }
-  _q(sel) { return this.shadowRoot.querySelector(sel); }
+  /* —— BUILD 2: element cache ——
+     querySelector/getElementById walk the shadow tree on every call; _build() only
+     runs once per config, so the resolved element is stable across _update() passes.
+     Cache it. isConnected guards against staleness if the tree is ever rebuilt —
+     a detached cached element is simply re-queried, no manual invalidation needed. */
+  _q(sel) {
+    const c = this._qCache || (this._qCache = new Map());
+    let el = c.get(sel);
+    if (el && el.isConnected) return el;
+    el = this.shadowRoot.querySelector(sel);
+    if (el) c.set(sel, el); else c.delete(sel);
+    return el;
+  }
+  _qi(id) {
+    const c = this._qiCache || (this._qiCache = new Map());
+    let el = c.get(id);
+    if (el && el.isConnected) return el;
+    el = this.shadowRoot.getElementById(id);
+    if (el) c.set(id, el); else c.delete(id);
+    return el;
+  }
   _setTxt(sel, t) { const e = this._q(sel); if (e && e.textContent !== t) e.textContent = t; }
   _setColor(sel, color) { const e = this._q(sel); if (e) e.style.color = color; }
   /* dual-battery aware value: "v1 | v2 unit" when battery2 on, else "v1 unit". */
@@ -1031,6 +1121,11 @@ class CasaLuna extends HTMLElement {
       /* —— weather system overlays (ported from khan-skycard) —— */
       #wxStars { position:absolute; left:0; top:0; width:${VB_W}px; height:58%; pointer-events:none; transition:opacity 1.4s ease; z-index:1; }
       #wxLayer { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:1; }
+      /* BUILD 3: tablet screen off / tab backgrounded — pause every CSS-driven animation
+         (stars, rain, snow, fog, lightning, device-tile pulses) in one rule. !important
+         beats the non-important inline animation shorthand each particle sets. SMIL
+         (animate elements in the flow/arc SVGs) is paused separately via pauseAnimations(). */
+      :host(.cl-paused) * { animation-play-state: paused !important; }
       @keyframes clTwinkle{0%,100%{opacity:.10}50%{opacity:.85}}
       @keyframes clRain{0%{transform:translateY(-30px) skewX(-10deg)}100%{transform:translateY(110%) skewX(-10deg)}}
       @keyframes clSnow{0%{transform:translateY(-10px) translateX(0)}25%{transform:translateY(28%) translateX(8px)}50%{transform:translateY(56%) translateX(-5px)}75%{transform:translateY(82%) translateX(9px)}100%{transform:translateY(110%) translateX(3px)}}
@@ -1158,7 +1253,7 @@ class CasaLuna extends HTMLElement {
       /* nav slide-panel: opens from nav rail's right edge, fills the MIDDLE zone only
          (right column stays visible). Vertical: below header → PV/PWR bar. */
       .detail { position:absolute; left:231px; top:130px;
-        width:869px; height:445px;
+        width:869px; height:768px;
         display:none; z-index:40;
         background:linear-gradient(135deg,rgba(12,28,52,.975),rgba(8,18,38,.985));
         border:2px solid rgba(0,200,255,.55); border-left:none;
@@ -1178,6 +1273,9 @@ class CasaLuna extends HTMLElement {
         border-radius:11px; min-height:44px; box-sizing:border-box; }
       .pw .pw-ic { width:24px; text-align:center; font-size:17px; flex-shrink:0; }
       /* shared small corner flip button (tap to flip) */
+      /* keyboard-focus visibility for custom (non-native) interactive elements —
+         these get role/tabindex assigned at bind time, see _a11yPass() */
+      [tabindex]:focus-visible { outline:2px solid #5bc8ff; outline-offset:2px; border-radius:4px; }
       .flipbtn { position:absolute; width:22px; height:22px; border-radius:50%; cursor:pointer;
         display:flex; align-items:center; justify-content:center; z-index:4;
         background:rgba(255,255,255,.10); border:1px solid rgba(150,200,255,.28);
@@ -1538,18 +1636,18 @@ class CasaLuna extends HTMLElement {
           <div class="val" style="position:absolute;left:14px;top:10px;font-size:15px" id="phaseTitle">${esc(c.label_phase_title || 'GRID PHASES')}</div>
           <div class="flipbtn" id="phaseFlipBtn" style="right:10px;top:10px">↻</div>
           <div style="position:absolute;left:14px;top:42px;font-size:10px;color:#a8cae6;letter-spacing:.04em">PWR<br><span style="font-size:8px;opacity:.7">kW</span></div>
-          <div id="phaseRowP" style="position:absolute;left:54px;right:12px;top:40px;display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#eaf4ff"></div>
+          <div id="phaseRowP" style="position:absolute;left:54px;right:12px;top:40px;display:flex;gap:6px;justify-content:space-between;font-size:15px;font-weight:700;color:#eaf4ff"></div>
           <div style="position:absolute;left:14px;top:74px;font-size:10px;color:#a8cae6;letter-spacing:.04em">VOLT<br><span style="font-size:8px;opacity:.7">V</span></div>
-          <div id="phaseRowV" style="position:absolute;left:54px;right:12px;top:72px;display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#a8cae6"></div>
+          <div id="phaseRowV" style="position:absolute;left:54px;right:12px;top:72px;display:flex;gap:6px;justify-content:space-between;font-size:15px;font-weight:700;color:#a8cae6"></div>
         </div>
         <!-- BACK: inverter pwr/volt as 3-phase -->
         <div class="flipface" style="position:absolute;inset:0;backface-visibility:hidden;transform:rotateY(180deg);padding:0">
           <div class="val" style="position:absolute;left:14px;top:10px;font-size:15px">${esc(c.label_inv_title || 'INVERTER')}</div>
           <div class="flipbtn" id="phaseFlipBackBtn" style="right:10px;top:10px">↻</div>
           <div style="position:absolute;left:14px;top:42px;font-size:10px;color:#a8cae6;letter-spacing:.04em">PWR<br><span style="font-size:8px;opacity:.7">kW</span></div>
-          <div id="invRowP" style="position:absolute;left:54px;right:12px;top:40px;display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#eaf4ff"></div>
+          <div id="invRowP" style="position:absolute;left:54px;right:12px;top:40px;display:flex;gap:6px;justify-content:space-between;font-size:15px;font-weight:700;color:#eaf4ff"></div>
           <div style="position:absolute;left:14px;top:74px;font-size:10px;color:#a8cae6;letter-spacing:.04em">VOLT<br><span style="font-size:8px;opacity:.7">V</span></div>
-          <div id="invRowV" style="position:absolute;left:54px;right:12px;top:72px;display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#a8cae6"></div>
+          <div id="invRowV" style="position:absolute;left:54px;right:12px;top:72px;display:flex;gap:6px;justify-content:space-between;font-size:15px;font-weight:700;color:#a8cae6"></div>
         </div>
       </div>
     </div>
@@ -1746,7 +1844,7 @@ class CasaLuna extends HTMLElement {
       <div class="lbl" style="position:absolute;left:16px;top:11px">MODE</div>
       <div class="val" id="modeVal" style="position:absolute;left:16px;top:33px;font-size:${Number(c.sz_mode) || 17}px;color:#22c3ff">--</div>
       <div style="position:absolute;left:14px;right:14px;top:66px;height:1px;background:rgba(150,200,255,.18)"></div>
-      <div style="position:absolute;left:16px;right:14px;top:76px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <div style="position:absolute;left:16px;right:14px;top:76px;display:flex;align-items:center;justify-content:space-between;gap:4px">
         <span id="invStateLbl" style="font-size:11px;color:#7fa3c4;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">${esc(c.label_inverter_state || 'INV STATE')}</span>
         <span class="val" id="invState" data-entity="${c.inverter_state || ''}" style="font-size:${Number(c.sz_invstate) || 13}px;font-weight:650;color:#39d353;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">--</span>
       </div>
@@ -1831,9 +1929,17 @@ class CasaLuna extends HTMLElement {
       const rowTop = headH + k * rowH;
       const midY = rowTop + rowH / 2;
       const tap = ent ? ` data-entity="${ent}"` : '';
+      /* bCtmp/bCv can show "X | Y unit" (dual temp sensors / min|max cell volt) — the only
+         2 of the 6 rows where content can outgrow the fixed-width value column. Smaller
+         font here avoids the ellipsis-clipping seen in longer-label languages. */
+      const baseSz = Number(c.sz_batbox_value) || 17;
+      const baseLblSz = Number(c.sz_batbox_label) || 12;
+      const dualRow = id === 'bCtmp' || id === 'bCv';
+      const lblSz = dualRow ? Math.max(9, baseLblSz - 2) : baseLblSz;
+      const valSz = dualRow ? Math.max(11, baseSz - 5) : baseSz;
       return `<div${tap} style="position:absolute;left:16px;right:14px;top:${midY - 9}px;display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-        <span id="${id}Lbl" style="font-size:${Number(c.sz_batbox_label) || 12}px;color:#a8cae6;white-space:nowrap;flex-shrink:0">${esc(l)}</span>
-        <span class="val" id="${id}" style="font-size:${Number(c.sz_batbox_value) || 17}px;color:${vc};text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">--</span>
+        <span id="${id}Lbl" style="font-size:${lblSz}px;color:#a8cae6;white-space:nowrap;flex-shrink:0">${esc(l)}</span>
+        <span class="val" id="${id}" style="font-size:${valSz}px;color:${vc};text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">--</span>
       </div>`;
     }).join('');
     const battStats = `
@@ -2039,7 +2145,7 @@ class CasaLuna extends HTMLElement {
           <img class="bg" id="bgA"><img class="bg" id="bgB" style="opacity:0">
           <svg id="wxStars" xmlns="http://www.w3.org/2000/svg" style="opacity:0"></svg>
           <div id="wxLayer"></div>
-          ${c.edge_dim ? '<div class="dim"></div>' : ''}
+          ${(() => { const dimOp = Number(c.edge_dim_opacity); return Number.isFinite(dimOp) && dimOp > 0 ? `<div class="dim" style="opacity:${Math.min(100, dimOp) / 100}"></div>` : ''; })()}
           ${header}${arc}${navToggle}${nav}
           ${c._show_bars ? barHtml('pv', SL.pv, 'PV', '#43ea13', 10) + barHtml('pwr', SL.pwr, 'PWR', '#0a8aea', 10) : ''}
           ${evBanner}
@@ -2102,6 +2208,7 @@ class CasaLuna extends HTMLElement {
 
   _bindEvents() {
     this._fitBottomLabels();
+    this._a11yPass();
     const c = this.config;
     this.shadowRoot.querySelectorAll('.navtile').forEach(t =>
       t.addEventListener('click', () => this._openView(t.dataset.view)));
@@ -2514,6 +2621,7 @@ class CasaLuna extends HTMLElement {
   /* wire all widget interactions after a panel renders */
   _bindPanelWidgets(root) {
     const hass = this._hass; if (!hass) return;
+    this._a11yPass(root);
     root.querySelectorAll('[data-cam-tap]').forEach(el => el.addEventListener('click', e => {
       if (e.target.id === 'camFsClose') return;
       this._openCameraFullscreen(el.getAttribute('data-cam-tap'), el.getAttribute('data-cam-label') || 'Camera', el.getAttribute('data-cam-url') || '');
@@ -2622,10 +2730,10 @@ class CasaLuna extends HTMLElement {
     const end = (e) => {
       if (!this._panelBusy) return;
       this._panelBusy = false;
-      try { track.releasePointerCapture(e.pointerId); } catch (_) {}
+      try { track.releasePointerCapture(e.pointerId); } catch (e2) { console.debug('casa-luna: releasePointerCapture no-op', e2); }
       if (v != null) commit(v);
     };
-    track.addEventListener('pointerdown', e => { this._panelBusy = true; v = fromX(e.clientX); try { track.setPointerCapture(e.pointerId); } catch (_) {} });
+    track.addEventListener('pointerdown', e => { this._panelBusy = true; v = fromX(e.clientX); try { track.setPointerCapture(e.pointerId); } catch (e2) { console.debug('casa-luna: setPointerCapture no-op', e2); } });
     track.addEventListener('pointermove', e => { if (this._panelBusy) v = fromX(e.clientX); });
     track.addEventListener('pointerup', end);
     track.addEventListener('pointercancel', () => { this._panelBusy = false; });
@@ -2660,6 +2768,31 @@ class CasaLuna extends HTMLElement {
         } else this._fireMoreInfo(id);
       });
     });
+    this._fitDetailPanel();
+  }
+
+  /* Size #detailPanel to fit THIS view's actual content instead of a constant height.
+     .detail-inner is position:absolute;inset:0 so it always stretches to match whatever
+     height the panel currently has — meaning scrollHeight just reports back that same
+     forced height when content is shorter (nothing to "scroll into view" yet). To get the
+     true content height we briefly relax the panel taller than any real view could need,
+     measure, then clamp: light views (a few buttons) shrink to fit; heavy views (many rows,
+     e.g. Security/Automation's Extra 1–6 slots) grow up to the cap — the inverter-tile row's
+     bottom edge, y=898 — and scroll inside .detail-inner beyond that, same as before. */
+  _fitDetailPanel() {
+    const panel = this._q('#detailPanel'), inner = this._q('#detailInner');
+    if (!panel || !inner) return;
+    const MIN = 200, MAX = 768;
+    /* .detail-inner is position:absolute;inset:0, so it always stretches to match
+       whatever height the panel currently has — scrollHeight just echoes that forced
+       size back, never the true (possibly shorter) content height. Briefly switch it
+       to normal flow (position:static) so height:auto reflects real content, measure,
+       then restore. */
+    const prevPos = inner.style.position;
+    inner.style.position = 'static';
+    const natural = inner.scrollHeight;
+    inner.style.position = prevPos;
+    panel.style.height = Math.max(MIN, Math.min(MAX, natural)) + 'px';
   }
 
   /* generic fallback: simple entity list from view_<view>_entities */
@@ -3114,7 +3247,47 @@ class CasaLuna extends HTMLElement {
   /* ── host-mounted overlay: mounts to document.body so modals escape the
      scaled .scaler / shadow DOM and render at true viewport size.
      Returns a close() that removes the node and untracks it. ── */
+  /* Scoped accessibility pass: the card's interactive elements are plain <div>s
+     identified by a small set of data-* hooks (already used consistently for click
+     binding) rather than native <button>/<input> elements, so they're invisible to
+     keyboard/screen-reader users by default. This assigns the right ARIA role +
+     tabindex to each known pattern and makes Enter/Space activate them like a real
+     button would. Not a full WCAG pass (focus order inside popups, live-region value
+     announcements, etc. aren't covered) — but it makes every tap-target reachable and
+     operable from a keyboard, which it wasn't at all before. Idempotent: safe to call
+     after every re-render. */
+  _a11yPass(root) {
+    const r = root || this.shadowRoot;
+    const switches = r.querySelectorAll('[data-toggle]');
+    switches.forEach(el => {
+      el.setAttribute('role', 'switch');
+      el.setAttribute('aria-checked', el.classList.contains('on') ? 'true' : 'false');
+      if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+    });
+    const buttons = r.querySelectorAll('[data-more], [data-press], [data-scene], [data-cam-tap], .flipbtn, .tap, .navtile, .bottile, .stattile');
+    buttons.forEach(el => {
+      if (!el.hasAttribute('role')) el.setAttribute('role', 'button');
+      if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+    });
+    const selects = r.querySelectorAll('[data-select]');
+    selects.forEach(el => { if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0'); });
+    if (this._a11yKeyBound) return;
+    this._a11yKeyBound = true;
+    this.shadowRoot.addEventListener('keydown', e => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const el = e.target.closest('[role="button"],[role="switch"]');
+      if (!el) return;
+      e.preventDefault();
+      el.click();
+    });
+  }
+
   _hostOverlay(node) {
+    /* tagged so a future mount can sweep up any overlay left behind by an abnormal
+       teardown (e.g. the card unloads before disconnectedCallback fires) — these mount
+       on document.body, outside the card's own subtree, so normal DOM removal of the
+       card element doesn't clean them up on its own. */
+    node.classList.add('cl-overlay');
     (this._overlays || (this._overlays = [])).push(node);
     document.body.appendChild(node);
     return () => { node.remove(); this._overlays = (this._overlays || []).filter(n => n !== node); };
@@ -3255,9 +3428,9 @@ class CasaLuna extends HTMLElement {
     const start = new Date(year, month, 1).toISOString(), end = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
     let events = [];
     try {
-      const all = await Promise.all(cals.map(c => this._hass.callApi('GET', `calendars/${c}?start=${start}&end=${end}`).catch(() => [])));
+      const all = await Promise.all(cals.map(c => this._hass.callApi('GET', `calendars/${encodeURIComponent(c)}?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`).catch(() => [])));
       events = all.flat().filter(Boolean);
-    } catch { events = []; }
+    } catch (e2) { console.warn('casa-luna: calendar fetch failed', e2); events = []; }
     if (this._calMonth.getMonth() !== month || this._calMonth.getFullYear() !== year) return;  // user navigated away
     const byDay = {};
     events.forEach(e => {
@@ -3712,7 +3885,7 @@ class CasaLuna extends HTMLElement {
     this._setTxt('#gridW', `${this._dec(gridFlowW / 1000)} kW`);
     /* Battery flow-line top value now = battery POWER, colored to match flow (set in flow block below) */
     /* Below-line volts: grid volt (hidden when 3-phase on), battery volt (always shown) */
-    const gridVoltEl = this.shadowRoot.getElementById('gridVolt');
+    const gridVoltEl = this._qi('gridVolt');
     if (gridVoltEl) {
       if (c._show_phase && hasPhases) { gridVoltEl.setAttribute('opacity', '0'); }
       else {
@@ -3753,8 +3926,6 @@ class CasaLuna extends HTMLElement {
       if (Number.isFinite(v) && c.cell_temp_x10) v *= 10;
       return v;
     };
-    const cellTempEnt = c.battery_temp1 || c.battery_temp2;
-    const cellTempV = Math.max(cellTemp(c.battery_temp1) || -Infinity, cellTemp(c.battery_temp2) || -Infinity);
     // LOAD tile
     const loadEl2 = this._q('#v_load');
     if (loadEl2) {
@@ -3787,7 +3958,7 @@ class CasaLuna extends HTMLElement {
       errEl.style.color = clean ? '#46e05a' : '#ff5040';
     }
     /* phase flip tile: front = grid phase pwr/volt, back = inverter pwr/volt (3 values each, no L1/L2 prefixes) */
-    const phaseVal = (id) => { const v = this._num(id, NaN); return Number.isFinite(v) ? `${this._decEnt(id)}` : '--'; };
+    const phaseVal = (id) => { const v = this._num(id, NaN); return Number.isFinite(v) ? v.toFixed(1) : '--'; };
     const phaseKw = (id) => { const v = this._watts(id, NaN); return Number.isFinite(v) ? `${this._dec(v / 1000)}` : '--'; };
     const setRow = (sel, vals) => { const el = this._q(sel); if (el) { const h = vals.map(v => `<span style="flex:1;text-align:center">${v}</span>`).join(''); if (el._h !== h) { el.innerHTML = h; el._h = h; } } };
     setRow('#phaseRowP', [phaseKw(c.grid_phase_a), phaseKw(c.grid_phase_b), phaseKw(c.grid_phase_c)]);
@@ -3889,7 +4060,7 @@ class CasaLuna extends HTMLElement {
       const t1 = cellTemp(c.battery_temp1), t2 = cellTemp(c.battery_temp2);
       const ts1 = Number.isFinite(t1) ? this._fmt(t1) : '--';
       const ts2 = Number.isFinite(t2) ? this._fmt(t2) : null;
-      this._setTxt('#bCtmp', ts2 ? `${ts1} | ${ts2} °C` : (Number.isFinite(t1) ? `${ts1} °C` : '--'));
+      this._setTxt('#bCtmp', ts2 ? `${ts1}|${ts2}°C` : (Number.isFinite(t1) ? `${ts1}°C` : '--'));
       this._setColor('#bCtmp', Number.isFinite(t1) ? tempColor(t1) : '#eaf4ff');
       this._dualVal('#bBms', c.battery_mos, c.battery2_mos, '°C');
       const mv = this._num(c.battery_mos, NaN);
@@ -3899,7 +4070,7 @@ class CasaLuna extends HTMLElement {
       /* guard: if sensors are swapped (min>max), display sorted low|high */
       if (Number.isFinite(mn) && Number.isFinite(mx) && mn > mx) { const t = mn; mn = mx; mx = t; const tr = mnRaw; mnRaw = mxRaw; mxRaw = tr; }
       const mns = Number.isFinite(mn) ? this._dec(mnRaw) : '--', mxs = Number.isFinite(mx) ? this._dec(mxRaw) : '--';
-      this._setTxt('#bCv', (Number.isFinite(mn) || Number.isFinite(mx)) ? `${mns} | ${mxs}` : '--');
+      this._setTxt('#bCv', (Number.isFinite(mn) || Number.isFinite(mx)) ? `${mns}|${mxs}` : '--');
       /* cell-voltage health colour: red critical, orange low/high, green normal — worse of min/max wins */
       const cvCrit = Number(c.thresh_cell_v_critical) || 3.0, cvLow = Number(c.thresh_cell_v_low) || 3.1, cvHigh = Number(c.thresh_cell_v_high) || 3.65;
       const cellVColor = v => !Number.isFinite(v) ? null : v <= cvCrit ? 3 : (v <= cvLow || v >= cvHigh) ? 2 : 1;
@@ -4029,7 +4200,7 @@ class CasaLuna extends HTMLElement {
       const battGlow = battDischarging ? 'rgba(224,120,0,0.30)' : battCharging ? 'rgba(57,255,20,0.30)' : 'rgba(156,163,175,0.20)';
       const battCore = battDischarging ? '#e07800'              : battCharging ? '#39ff14'               : '#9ca3af';
       /* flow-line battery value = battery power, colored to match flow */
-      const loadWel = this.shadowRoot.getElementById('loadW');
+      const loadWel = this._qi('loadW');
       if (loadWel) {
         const pw = Math.abs(bP);
         loadWel.textContent = pw >= 1000 ? `${this._dec(pw / 1000)} kW` : `${Math.round(pw)} W`;
@@ -4044,20 +4215,28 @@ class CasaLuna extends HTMLElement {
       const poleGlow = gridImporting ? 'rgba(224,120,0,0.30)' : gridExporting ? 'rgba(57,255,20,0.30)' : 'rgba(156,163,175,0.20)';
       const poleCore = gridImporting ? '#e07800'              : gridExporting ? '#39ff14'               : '#9ca3af';
 
+      /* BUILD 2: dirty-check each attribute write — this loop fires on every battery/grid
+         power update (the most frequent real _update() trigger) across 12 elements x up to
+         4 attrs. Steady-state power (same dur/color for many consecutive passes) previously
+         rewrote all of them every time; now skipped when unchanged. Cache child <animate>
+         lookup on the element too, so it isn't re-walked every pass. */
       const drive = (ids, active, dur, glow, core, reverse = false) => {
         ids.forEach(([id, isGlow]) => {
-          const el = this.shadowRoot.getElementById(id); if (!el) return;
-          el.setAttribute('opacity', active ? '1' : '0');
-          el.setAttribute('stroke', isGlow ? glow : core);
-          const a = el.querySelector('animate');
+          const el = this._qi(id); if (!el) return;
+          const op = active ? '1' : '0';
+          if (el._clOp !== op) { el.setAttribute('opacity', op); el._clOp = op; }
+          const strokeCol = isGlow ? glow : core;
+          if (el._clStroke !== strokeCol) { el.setAttribute('stroke', strokeCol); el._clStroke = strokeCol; }
+          const a = el._clAnim !== undefined ? el._clAnim : (el._clAnim = el.querySelector('animate'));
           if (a) {
-            a.setAttribute('dur', dur);
+            if (a._clDur !== dur) { a.setAttribute('dur', dur); a._clDur = dur; }
             /* dot travel direction: forward = path dir (battery→home / discharge);
                reverse = opposite (home→battery / charge). cycle from data-cyc. */
             let cyc = a.getAttribute('data-cyc');
             if (cyc === null) { cyc = a.getAttribute('from'); a.setAttribute('data-cyc', cyc); }
-            if (reverse) { a.setAttribute('from', '0'); a.setAttribute('to', cyc); }
-            else         { a.setAttribute('from', cyc); a.setAttribute('to', '0'); }
+            const from = reverse ? '0' : cyc, to = reverse ? cyc : '0';
+            if (a._clFrom !== from) { a.setAttribute('from', from); a._clFrom = from; }
+            if (a._clTo   !== to)   { a.setAttribute('to',   to);   a._clTo   = to; }
           }
         });
       };
@@ -4066,14 +4245,14 @@ class CasaLuna extends HTMLElement {
       drive([['poleHGlow',true],['poleHCore',false],['poleVGlow',true],['poleVCore',false],['poleDGlow',true],['poleDCore',false]], poleActive, poleDur, poleGlow, poleCore, gridExporting);
 
       // Battery dynamic arrow: discharging → house end (D); charging → battery end (A)
-      const battArrD = this.shadowRoot.getElementById('battArrD');
-      const battArrA = this.shadowRoot.getElementById('battArrA');
+      const battArrD = this._qi('battArrD');
+      const battArrA = this._qi('battArrA');
       if (battArrD) { battArrD.setAttribute('opacity', battActive && battDischarging ? '1' : '0'); battArrD.setAttribute('stroke', battCore); }
       if (battArrA) { battArrA.setAttribute('opacity', battActive && battCharging ? '1' : '0'); battArrA.setAttribute('stroke', battCore); }
 
       // Pole dynamic arrow: importing → house end (R, ►); exporting → grid end (P, ◄)
-      const poleArrR = this.shadowRoot.getElementById('poleArrR');
-      const poleArrP = this.shadowRoot.getElementById('poleArrP');
+      const poleArrR = this._qi('poleArrR');
+      const poleArrP = this._qi('poleArrP');
       if (poleArrR) { poleArrR.setAttribute('opacity', poleActive && gridImporting ? '1' : '0'); poleArrR.setAttribute('stroke', poleCore); }
       if (poleArrP) { poleArrP.setAttribute('opacity', poleActive && gridExporting ? '1' : '0'); poleArrP.setAttribute('stroke', poleCore); }
   }
@@ -4380,6 +4559,11 @@ class CasaLuna extends HTMLElement {
       this._prevPvTier   = _pvTier;
       this._prevPvWaveBx = sun.bx;
       this._prevPvWaveBy = sun.by;
+      /* Double-buffer swap: there are two wave groups (pvFlowGroupA / pvFlowGroupB).
+         Only one is visible (opacity 1) at a time. To redraw, we rebuild the *hidden*
+         group's SVG content first, then flip both groups' opacity in the same tick.
+         This avoids the flash/flicker that would occur if we instead mutated the
+         currently-visible group's innerHTML directly while it's on screen. */
       const activeSlot = this._pvSlot;
       const nextSlot   = activeSlot === 'A' ? 'B' : 'A';
       const nextGroup  = getEl('pvFlowGroup' + nextSlot);
@@ -4525,7 +4709,18 @@ class CasaLuna extends HTMLElement {
     if (Number.isFinite(peakV) && peakV > 0) {
       mk('circle', { cx: peakX.toFixed(1), cy: peakY.toFixed(1), r: '2.6', fill: '#fff' });
       const chipTxt = `peak ${fmt(peakV)}`;
-      const chipW = chipTxt.length * 5.2 + 10;
+      /* measure the actual rendered text width via a temporary, invisible probe element
+         rather than approximating ~5.2px/character — a fixed per-char estimate assumes
+         English-average glyph width and sizes the chip wrong for wider scripts (Cyrillic,
+         accented Latin, etc.) now that the card supports 15 languages. */
+      const probe = document.createElementNS(NS, 'text');
+      probe.setAttribute('class', 'gOverlay');
+      probe.setAttribute('font-size', '8.5'); probe.setAttribute('font-weight', '700'); probe.setAttribute('opacity', '0');
+      probe.textContent = chipTxt;
+      svg.appendChild(probe);
+      const textW = probe.getBBox().width;
+      probe.remove();
+      const chipW = textW + 14;
       let chipX = peakX + 6; if (chipX + chipW > w - 2) chipX = peakX - 6 - chipW;
       const chipY = Math.max(2, peakY - 14);
       mk('rect', { x: chipX.toFixed(1), y: chipY.toFixed(1), width: chipW.toFixed(1), height: '12', rx: '3', fill: 'rgba(0,0,0,.6)', stroke: 'rgba(255,255,255,.2)', 'stroke-width': '0.6' });
@@ -4891,6 +5086,43 @@ class CasaLunaEditor extends HTMLElement {
       return wrap;
     };
 
+    /* —— BASIC / ADVANCED split ——
+       Basic view shows only the sections needed to get a working card. Everything else
+       is hidden behind one toggle (off by default) so the editor isn't an overwhelming
+       wall of 25 sections on first open. Pure show/hide — no config/section changes.
+       Implemented by intercepting appendChild so the 25 existing section() calls below
+       stay untouched: advanced ones are simply dropped when _show_advanced is off. */
+    const ADVANCED_SECTIONS = new Set([
+      'phaseflip', 'ev', 'thresholds', 'appearance', 'textsizes',
+      'nav_cameras', 'nav_energy', 'nav_plugs', 'nav_battery', 'nav_climate',
+      'nav_security', 'nav_automation', 'nav_lighting', 'recent_events', 'nav_system', 'testing'
+    ]);
+    const showAdv = !!cfg._show_advanced;
+    const rawAppend = shell.appendChild.bind(shell);
+    shell.appendChild = (node) => {
+      if (!showAdv && node && node.dataset && ADVANCED_SECTIONS.has(node.dataset.sec)) return node;
+      return rawAppend(node);
+    };
+
+    /* advanced toggle banner (spans both columns) */
+    const advBanner = document.createElement('div');
+    advBanner.className = 'section wide';
+    advBanner.style.cssText = 'margin-bottom:14px';
+    const advHdr = document.createElement('div');
+    advHdr.className = 'hdr';
+    advHdr.style.cursor = 'default';
+    const advT = document.createElement('span');
+    advT.textContent = showAdv ? '🛠️ Advanced settings shown' : '✨ Basic view';
+    advHdr.appendChild(advT);
+    const advChip = document.createElement('span');
+    advChip.className = 'chip' + (showAdv ? ' on' : '');
+    advChip.textContent = showAdv ? '✓ Advanced' : '＋ Show advanced';
+    advChip.style.cursor = 'pointer';
+    advChip.addEventListener('click', e => { e.stopPropagation(); this._set('_show_advanced', !showAdv); });
+    advHdr.appendChild(advChip);
+    advBanner.appendChild(advHdr);
+    rawAppend(advBanner);
+
     shell.appendChild(section('general', '⚙️', 'General', [
       textField('title', 'Title', 'CASA LUNA'),
       textField('inverter_name', 'Inverter Name', 'e.g. My Inverter'),
@@ -4902,6 +5134,8 @@ class CasaLunaEditor extends HTMLElement {
       numberField('inverter_max_power', 'Inverter Max Power', 0, 20000, 100, 'W'),
       divider(),
       numberField('lower_section_offset', 'Flow diagram vertical offset', -80, 80, 1, 'SVG units (− = up)'),
+      divider(),
+      textField('background_path', 'Background Image Path', '/local/community/casa-luna/sky'),
     ]));
 
     shell.appendChild(section('toggles', '🎚️', 'Toggles', [
@@ -4913,6 +5147,8 @@ class CasaLunaEditor extends HTMLElement {
       switchRow('_show_pv_extra', '☀️ Extra PV strings', 'Enable PV3–PV6', false),
       switchRow('_show_ev', '🚗 EV / car charger tile', 'Show the EV charger tile', false),
       switchRow('_show_battery2', '🔋 Secondary battery', 'Enable a second battery pack', false),
+      divider(),
+      switchRow('history_charts', '📈 History charts', 'Fetch & render sparkline/chart history (disable to cut HA history-API calls)', true),
     ]));
 
     shell.appendChild(section('weather', '☀️', 'Weather & Sun', [
@@ -4939,6 +5175,10 @@ class CasaLunaEditor extends HTMLElement {
         eg('pv5_voltage', 'PV5 VOLT'),
         eg('pv6_voltage', 'PV6 VOLT'),
       ], { sub: true }),
+      divider(),
+      eg('today_pv', "TODAY'S PV"),
+      eg('total_pv', 'TOTAL PV (lifetime)'),
+      textField('label_today_production', "Today's Production — caption", "TODAY'S PRODUCTION"),
     ]));
 
     shell.appendChild(section('grid', '🔌', 'Grid', [
@@ -4948,21 +5188,27 @@ class CasaLunaEditor extends HTMLElement {
       eg('grid_voltage', 'GRID VOLT'),
       eg('grid_import_today', 'GRID IMPORT'),
       eg('grid_export_energy', 'GRID EXPORT'),
-      section('grid3phase', '⚡', '3-Phase Breakdown', [
-        eg('grid_phase_a', 'PHASE L1'),
-        eg('grid_phase_a_volt', 'L1 VOLT'),
-        eg('grid_phase_b', 'PHASE L2'),
-        eg('grid_phase_b_volt', 'L2 VOLT'),
-        eg('grid_phase_c', 'PHASE L3'),
-        eg('grid_phase_c_volt', 'L3 VOLT'),
-      ], { sub: true }),
+      eg('total_import', 'TOTAL IMPORT (lifetime)'),
+      eg('total_export', 'TOTAL EXPORT (lifetime)'),
+      textField('label_total_imp', 'Total Import — caption', 'TOTAL IMP'),
+      textField('label_total_exp', 'Total Export — caption', 'TOTAL EXP'),
+      divider(),
+      eg('consump', 'LOAD'),
+      eg('today_load', "TODAY'S LOAD"),
+      textField('label_today_consumption', "Today's Consumption — caption", "TODAY'S CONSUMPTION"),
     ]));
 
     shell.appendChild(section('phaseflip', '🔄', 'Phase / Inverter Tile', [
-      info('Front shows grid phases (above). Tap OK to flip → inverter power/volt below.'),
+      info('One flip tile: front shows grid 3-phase power/volt, back shows inverter L1–L3 power/volt.'),
       textField('label_phase_title', 'Front title', 'GRID PHASES'),
-      textField('label_inv_title', 'Back title', 'INVERTER'),
+      eg('grid_phase_a', 'PHASE L1'),
+      eg('grid_phase_a_volt', 'L1 VOLT'),
+      eg('grid_phase_b', 'PHASE L2'),
+      eg('grid_phase_b_volt', 'L2 VOLT'),
+      eg('grid_phase_c', 'PHASE L3'),
+      eg('grid_phase_c_volt', 'L3 VOLT'),
       divider(),
+      textField('label_inv_title', 'Back title', 'INVERTER'),
       eg('inv_l1_power', 'Inverter L1 Power'),
       eg('inv_l2_power', 'Inverter L2 Power'),
       eg('inv_l3_power', 'Inverter L3 Power'),
@@ -4972,6 +5218,12 @@ class CasaLunaEditor extends HTMLElement {
       divider(),
       info('Optional — for hybrid setups where other inverters also feed the house directly. If set, INV LOAD % uses this inverter\'s own output instead of total house consumption.'),
       eg('inverter_output_power', 'Inverter Output Power'),
+    ]));
+
+    shell.appendChild(section('inverter', '🔄', 'Inverter Status', [
+      eg('inverter_state', 'INV STATE'),
+      eg('inv_temp', 'INVERTER TEMP'),
+      eg('inverter_error', 'INVERTER ERROR'),
     ]));
 
     shell.appendChild(section('battery', '🔋', 'Battery', [
@@ -4988,6 +5240,10 @@ class CasaLunaEditor extends HTMLElement {
       eg('battery_min_cell', 'MIN CELL'),
       eg('battery_mos', 'BMS / MOS'),
       eg('battery_max_cell', 'MAX CELL'),
+      divider(),
+      eg('today_batt_chg', 'BATT CHARGE'),
+      eg('batt_dis', 'Batt Discharge'),
+      textField('label_chg_dis', 'Charge/Discharge — caption', 'CHG / DIS'),
       section('battery2', '🔋', 'Secondary Battery', [
         eg('battery2_soc', 'BATT2 SOC'),
         eg('battery2_power', 'BATT2 POWER'),
@@ -4995,30 +5251,6 @@ class CasaLunaEditor extends HTMLElement {
         eg('battery2_voltage', 'BATT2 VOLT'),
         eg('battery2_mos', 'BATT2 BMS'),
       ], { sub: true }),
-    ]));
-
-    shell.appendChild(section('inverter', '🔄', 'Inverter', [
-      eg('inverter_state', 'INV STATE'),
-      eg('inv_temp', 'INVERTER TEMP'),
-      eg('inverter_error', 'INVERTER ERROR'),
-      eg('consump', 'LOAD'),
-    ]));
-
-    shell.appendChild(section('solar_extras', '📊', 'Energy Today', [
-      eg('today_pv', "TODAY'S PV"),
-      eg('total_pv', 'TOTAL PV (lifetime)'),
-      eg('total_import', 'TOTAL IMPORT (lifetime)'),
-      eg('total_export', 'TOTAL EXPORT (lifetime)'),
-      eg('today_batt_chg', 'BATT CHARGE'),
-      eg('batt_dis', 'Batt Discharge'),
-      eg('today_load', "TODAY'S LOAD"),
-      divider(),
-      info('Captions for the bottom totals tiles.'),
-      textField('label_total_imp', 'Total Import — caption', 'TOTAL IMP'),
-      textField('label_total_exp', 'Total Export — caption', 'TOTAL EXP'),
-      textField('label_chg_dis', 'Charge/Discharge — caption', 'CHG / DIS'),
-      textField('label_today_consumption', "Today's Consumption — caption", "TODAY'S CONSUMPTION"),
-      textField('label_today_production', "Today's Production — caption", "TODAY'S PRODUCTION"),
     ]));
 
     shell.appendChild(section('ev', '🚗', 'EV / Car Charger', [
@@ -5059,6 +5291,9 @@ class CasaLunaEditor extends HTMLElement {
       ),
       grid2(
         numberField('thresh_cell_v_low', 'Cell V Low', 0, 5, 0.01, 'V'),
+        numberField('thresh_cell_v_critical', 'Cell V Critical', 0, 5, 0.01, 'V'),
+      ),
+      grid2(
         numberField('thresh_cell_v_high', 'Cell V High', 0, 5, 0.01, 'V'),
       ),
       grid2(
@@ -5076,6 +5311,8 @@ class CasaLunaEditor extends HTMLElement {
       colorField('ui_bg_color', 'Background colour', '#000000'),
       rangeField('ui_bg_opacity', 'Background opacity', 0, 100, 1, '%'),
       rangeField('ui_blur', 'Background blur', 0, 30, 1, 'px'),
+      divider(),
+      rangeField('edge_dim_opacity', '🌑 Edge dim overlay', 0, 100, 1, '%'),
       info('Tap the clock to open a month calendar. Add calendar entities to show their events.'),
       listField('calendar_entities', 'Calendar entities'),
     ]));
@@ -5114,9 +5351,9 @@ class CasaLunaEditor extends HTMLElement {
     ]));
 
     /* ── Per-view entity configuration (every field from the 8 nav panels) ── */
-    shell.appendChild(section('nav_cameras', '📷', 'Cameras (go2rtc)', [
-      info('Set the go2rtc base URL (e.g. http://192.168.3.109:1984), then pick each camera entity. Streams embed as live WebRTC.'),
-      textField('camera_stream_base', 'Stream base URL', 'http://192.168.3.109:1984'),
+    shell.appendChild(section('nav_cameras', '📷', 'Cameras', [
+      info('Pick a camera entity and it just works — streams live via Home Assistant\'s own camera proxy, no extra setup. Leave "Stream base URL" empty unless you run go2rtc.'),
+      textField('camera_stream_base', 'go2rtc base URL (optional — for lower-latency WebRTC)', 'http://192.168.3.109:1984'),
       picker('sec_cam1', 'Camera 1 (Front)', true),
       picker('sec_cam2', 'Camera 2 (Gate)', true),
     ]));
@@ -5164,7 +5401,7 @@ class CasaLunaEditor extends HTMLElement {
       picker('bat_discharge_enable', 'Discharging enable (switch)', true),
       picker('bat_force_charge', 'Force charge (switch)', true),
       picker('bat_soc_limit', 'Charge SoC limit (number)', true),
-    ]));
+    ], { wide: true }));
 
     shell.appendChild(section('nav_climate', '🌡️', 'Climate View', [
       switchRow('auto_discover_climate', 'Auto-discover', 'Show all climate.* + temp/humidity sensors automatically (ignores manual picks below).'),
