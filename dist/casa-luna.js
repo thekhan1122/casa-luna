@@ -1,4 +1,4 @@
-// v1.0.0 · build no.87
+// v1.0.0 stable · build no.103
 /* ════════════════════════════════════════════════════════════════════
    casa-luna.js — Casa Luna Edition · by The Khan
    Custom element: <casa-luna>  (renamed from khan-skycard to avoid
@@ -597,34 +597,34 @@ class CasaLuna extends HTMLElement {
   /* —— config (keys preserved from casa_luna.js, plus additive keys) —— */
   static getStubConfig() {
     return {
-      pv1_power: 'sensor.goodwe_pv1_power',
+      pv1_power: '',
       pv2_power: '',
       pv3_power: '', pv4_power: '', pv5_power: '', pv6_power: '',
-      pv_total_power: 'sensor.goodwe_pv_power',
-      grid_active_power: 'sensor.goodwe_active_power',
+      pv_total_power: '',
+      grid_active_power: '',
       grid_export_energy: '',
-      consump: 'sensor.goodwe_house_consumption',
-      today_pv: 'sensor.goodwe_today_s_pv_generation',
-      total_pv: 'sensor.goodwe_total_pv_generation',
+      consump: '',
+      today_pv: '',
+      total_pv: '',
       total_import: '', total_export: '',
-      inverter_state: 'sensor.goodwe_work_mode',
+      inverter_state: '',
       inverter_error: '',
-      today_batt_chg: 'sensor.goodwe_today_battery_charge',
-      today_load: 'sensor.goodwe_today_load',
-      battery_soc: 'sensor.jk_soc',
-      battery_power: 'sensor.jk_power',
-      battery_current: 'sensor.jk_current',
-      battery_voltage: 'sensor.jk_voltage',
+      today_batt_chg: '',
+      today_load: '',
+      battery_soc: '',
+      battery_power: '',
+      battery_current: '',
+      battery_voltage: '',
       label_cell_temp: 'CELL TEMP',
       label_load: 'LOAD',
       label_cell_volt: 'CELL VOLT',
-      battery_temp1: 'sensor.jk_temp1',
-      battery_temp2: 'sensor.jk_temp2',
-      battery_mos: 'sensor.jk_mos',
-      battery_min_cell: 'sensor.jk_cellmin',
-      battery_max_cell: 'sensor.jk_cellmax',
-      inv_temp: 'sensor.goodwe_inverter_temperature_module',
-      batt_dis: 'sensor.goodwe_today_battery_discharge',
+      battery_temp1: '',
+      battery_temp2: '',
+      battery_mos: '',
+      battery_min_cell: '',
+      battery_max_cell: '',
+      inv_temp: '',
+      batt_dis: '',
       battery2_soc: '', battery2_power: '', battery2_current: '',
       battery2_voltage: '', battery2_mos: '',
       battery_full_ah: 0, battery_full_wh: 0, battery_cap_unit: 'ah',
@@ -640,10 +640,10 @@ class CasaLuna extends HTMLElement {
       inverter_name: '',
       label_bms_temp: 'BMS TEMP', label_endurance: 'ENDURANCE',
       label_batt_current: 'BATT CURRENT', label_capacity: 'CAPACITY',
-      pv1_voltage: 'sensor.goodwe_pv1_voltage',
+      pv1_voltage: '',
       pv2_voltage: '',
       pv3_voltage: '', pv4_voltage: '', pv5_voltage: '', pv6_voltage: '',
-      grid_import_today: 'sensor.goodwe_today_energy_import',
+      grid_import_today: '',
       grid_voltage: '',
       _show_phase: true, grid_phase_a: '', grid_phase_b: '', grid_phase_c: '',
       grid_phase_a_volt: '', grid_phase_b_volt: '', grid_phase_c_volt: '',
@@ -653,9 +653,9 @@ class CasaLuna extends HTMLElement {
       _show_bars: true, _show_battstats: true, _show_pvtile: true,
       _extra_tile_1_enabled: true,  _extra_tile_1_label: 'Heat Pump',   _extra_tile_1_entity: '', _extra_tile_1_icon: 'heat',
       _extra_tile_2_enabled: true,  _extra_tile_2_label: 'Irrigation',  _extra_tile_2_entity: '', _extra_tile_2_icon: 'water',
-      _extra_tile_3_enabled: true,  _extra_tile_3_label: 'Gas / Flame', _extra_tile_3_entity: 'binary_sensor.espflame', _extra_tile_3_icon: 'flame',
+      _extra_tile_3_enabled: true,  _extra_tile_3_label: 'Gas / Flame', _extra_tile_3_entity: '', _extra_tile_3_icon: 'flame',
       _extra_tile_4_enabled: true,  _extra_tile_4_label: 'AC',          _extra_tile_4_entity: '', _extra_tile_4_icon: 'snow',
-      _extra_tile_5_enabled: true,  _extra_tile_5_label: 'Lights',      _extra_tile_5_entity: 'switch.light_2_switch_1', _extra_tile_5_icon: 'bulb',
+      _extra_tile_5_enabled: true,  _extra_tile_5_label: 'Lights',      _extra_tile_5_entity: '', _extra_tile_5_icon: 'bulb',
       _extra_tile_6_enabled: true,  _extra_tile_6_label: 'Outlet',      _extra_tile_6_entity: '', _extra_tile_6_icon: 'plug',
       thresh_temp_warn: 40, thresh_temp_critical: 50,
       thresh_cell_v_low: 3.1, thresh_cell_v_critical: 3.0, thresh_cell_v_high: 3.65,
@@ -676,18 +676,18 @@ class CasaLuna extends HTMLElement {
       events_entities: [],
       /* ── phase / inverter flip tile ── */
       label_phase_title: 'GRID PHASES', label_inv_title: 'INVERTER',
-      inv_l1_power: 'sensor.goodwe_back_up_l1_power', inv_l2_power: 'sensor.goodwe_back_up_l2_power', inv_l3_power: '',
+      inv_l1_power: '', inv_l2_power: '', inv_l3_power: '',
       inverter_output_power: '',
       inv_l1_volt: '', inv_l2_volt: '', inv_l3_volt: '',
       /* ── SECURITY view ── (real entities pre-filled; slots empty for later) */
-      sec_cam1: 'camera.lc_profile001', sec_cam2: 'camera.lc_profile101',
-      sec_flame: 'binary_sensor.espflame', sec_gas_analog: 'sensor.espgasa',
-      sec_gas_digital: 'binary_sensor.espgasd', sec_motion: 'binary_sensor.espmotion',
+      sec_cam1: '', sec_cam2: '',
+      sec_flame: '', sec_gas_analog: '',
+      sec_gas_digital: '', sec_motion: '',
       sec_door1: '', sec_window1: '',
       sec_scene_arm: '', sec_scene_disarm: '', sec_scene_night: '', sec_motion_alert: '',
       /* ── CLIMATE view ── (ambient/lux pre-filled from your ESP; AC/fridge slots for later) */
       clim_ac: '', clim_fridge_temp: '', clim_fridge_door: '', clim_fridge_power: '',
-      clim_ambient: 'sensor.esptemp', clim_humidity: '', clim_lux: 'sensor.esplight',
+      clim_ambient: '', clim_humidity: '', clim_lux: '',
       clim_window_ac: '', clim_schedule: '',
       clim_ac_name: '', clim_fridge_temp_name: '', clim_fridge_door_name: '', clim_fridge_power_name: '',
       clim_ambient_name: '', clim_humidity_name: '', clim_lux_name: '',
@@ -707,12 +707,12 @@ class CasaLuna extends HTMLElement {
       auto_extra_1_entity: '', auto_extra_1_name: '', auto_extra_2_entity: '', auto_extra_2_name: '', auto_extra_3_entity: '', auto_extra_3_name: '',
       auto_extra_4_entity: '', auto_extra_4_name: '', auto_extra_5_entity: '', auto_extra_5_name: '', auto_extra_6_entity: '', auto_extra_6_name: '',
       /* ── ENERGY view ── (monitoring pre-filled from GoodWe/Tuya; control slots for later) */
-      en_pv1: 'sensor.goodwe_pv1_power', en_pv2: 'sensor.goodwe_pv2_power',
-      en_grid_power: 'sensor.goodwe_active_power', en_load: 'sensor.goodwe_load',
-      en_backup: 'sensor.goodwe_back_up_load', en_work_mode: 'sensor.goodwe_work_mode',
+      en_pv1: '', en_pv2: '',
+      en_grid_power: '', en_load: '',
+      en_backup: '', en_work_mode: '',
       en_backup_supply: '', en_ems_mode: '', en_op_mode: '', en_export_switch: '', en_export_limit: '',
       en_dod_holding: '', en_soc_protect: '', en_dod_ongrid: '', en_dod_offgrid: '',
-      en_eco_power: '', en_ems_power: '', en_grid_switch: 'switch.grid_switch', en_sync_time: '',
+      en_eco_power: '', en_ems_power: '', en_grid_switch: '', en_sync_time: '',
       /* ── BATTERY view ── (JK BMS pre-filled; charge-control slots for later) */
       bat_soc: '', bat_voltage: '',
       bat_current: '', bat_power: '',
@@ -724,24 +724,24 @@ class CasaLuna extends HTMLElement {
       /* ── AUTOMATION view ── (relays + Alexa pre-filled; scenes/automations/timers slots) */
       auto_scene_night: '', auto_scene_morning: '', auto_scene_away: '',
       auto_scene_movie: '', auto_scene_party: '', auto_scene_home: '',
-      auto_relay1: 'switch.khan_automation_khan_automation_relay_1',
-      auto_relay2: 'switch.khan_automation_khan_automation_relay_2',
-      auto_relay3: 'switch.khan_automation_khan_automation_relay_3',
-      auto_relay4: 'switch.khan_automation_khan_automation_relay_4',
+      auto_relay1: '',
+      auto_relay2: '',
+      auto_relay3: '',
+      auto_relay4: '',
       auto_motion_lights: '', auto_sunset_lights: '', auto_door_alerts: '',
       auto_low_batt: '', auto_smoke_fan: '',
       auto_night_mode: '', auto_vacation_mode: '', auto_guest_mode: '',
-      auto_alexa: 'media_player.zia_s_echo',
+      auto_alexa: '',
       tuya_sw1: '', tuya_sw1_on: '', tuya_sw1_off: '', tuya_sw1_timer: '',
       tuya_sw2: '', tuya_sw2_on: '', tuya_sw2_off: '', tuya_sw2_timer: '',
       /* ── LIGHTING view ── (Zigbee light pre-filled; others slots) */
-      light1: '', light2: '', light3: '', light_zigbee: 'switch.light_2_switch_1',
+      light1: '', light2: '', light3: '', light_zigbee: '',
       light_all_on: '', light_all_off: '', light_adaptive: '',
       /* ── SYSTEM view ── (ESP/inverter pre-filled; server stats slots) */
-      sys_inv_temp: 'sensor.goodwe_inverter_temperature_module', sys_work_mode: 'sensor.goodwe_work_mode',
-      sys_c3_status: 'binary_sensor.khan_automation_controls_khan_automation_c3_status',
-      sys_board_temp: 'sensor.esptemp', sys_gas: 'sensor.espgasa', sys_lux: 'sensor.esplight',
-      sys_wifi: '', sys_bluetooth: '', sys_grid_meter: 'sensor.grid_total_energy',
+      sys_inv_temp: '', sys_work_mode: '',
+      sys_c3_status: '',
+      sys_board_temp: '', sys_gas: '', sys_lux: '',
+      sys_wifi: '', sys_bluetooth: '', sys_grid_meter: '',
       _demo_mode: false,
       calendar_entities: [],
       sys_cpu: '', sys_memory: '', sys_disk: '', sys_uptime: '',
@@ -1012,18 +1012,18 @@ class CasaLuna extends HTMLElement {
   }
   _fmt(v) { return this._dec(v); }
 
-  /* The 7 customizable tiles. entityKey = the entity the editor already edits;
-     defEntity = its original default, compared against to decide raw-vs-formatted display. */
+  /* The 7 customizable tiles → the config key the editor edits for each.
+     A tile shows raw (entity's own unit/sign) when its entity is set, else default kWh. */
   /* ═══════════════════════ TILE / ENTITY CONFIG HELPERS ═══════════════════════ */
   _TILES() {
     return {
-      load:  { defEntity:'sensor.goodwe_house_consumption',     entityKey:'consump'           },
-      ctmp:  { defEntity:'sensor.jk_temp1',                     entityKey:'battery_temp1'     },
-      bms:   { defEntity:'sensor.jk_mos',                       entityKey:'battery_mos'       },
-      cellv: { defEntity:'sensor.jk_cellmin',                   entityKey:'battery_min_cell'  },
-      imp:   { defEntity:'sensor.goodwe_today_energy_import',   entityKey:'grid_import_today' },
-      exp:   { defEntity:'sensor.goodwe_today_energy_export',   entityKey:'grid_export_energy'},
-      pv:    { defEntity:'sensor.goodwe_total_pv_generation',   entityKey:'total_pv'          },
+      load:  { entityKey:'consump'           },
+      ctmp:  { entityKey:'battery_temp1'     },
+      bms:   { entityKey:'battery_mos'       },
+      cellv: { entityKey:'battery_min_cell'  },
+      imp:   { entityKey:'grid_import_today' },
+      exp:   { entityKey:'grid_export_energy'},
+      pv:    { entityKey:'total_pv'          },
     };
   }
   /* custom=true whenever the entity differs from default — switches that tile to raw
@@ -1034,8 +1034,7 @@ class CasaLuna extends HTMLElement {
   _tileState(key) {
     const c = this.config, t = this._TILES()[key];
     const curEnt = c[t.entityKey] || '';
-    const entityChanged = !!curEnt && curEnt !== t.defEntity;
-    return { custom: entityChanged, entity: curEnt };
+    return { custom: !!curEnt, entity: curEnt };
   }
   /* raw display string for a fallen-back tile: 1-decimal numeric (+unit), or text state, or '--' */
   _rawTile(entId) {
@@ -1048,10 +1047,37 @@ class CasaLuna extends HTMLElement {
   }
   /* ═══════════════════════ FORMAT & DOM HELPERS ═══════════════════════ */
   _kwh(v) { return Number.isFinite(v) ? `${this._dec(v)} kWh` : '--'; }
+  /* unified power label: takes WATTS, shows small values in W and large in kW
+     (decimals capped via _dec). Single source of truth so every power readout —
+     flow lines, tiles, phase/inverter, PV strings — formats identically. */
+  _powerStr(watts) {
+    if (!Number.isFinite(watts)) return '--';
+    const a = Math.abs(watts);
+    return a >= 1000 ? `${this._dec(watts / 1000)} kW` : `${Math.round(watts)} W`;
+  }
+  /* reading the entity: if it's genuinely a power sensor (unit W/kW/MW, or a plain
+     unitless number) show smart W/kW; otherwise fall back to the entity's own
+     value+unit, or its text state, or '--'. So a power slot pointed at a %, °C, or
+     text-state entity still shows that entity's real reading instead of blanking —
+     matching how mainstream HA cards behave. */
+  _powerEnt(id) {
+    if (!id) return '--';
+    const s = this._stateObj(id);
+    if (!s || s.state === 'unavailable' || s.state === 'unknown' || s.state === '') return '--';
+    const unit = (s.attributes?.unit_of_measurement || '').trim();
+    const u = unit.toLowerCase();
+    const num = parseFloat(s.state);
+    if (u === 'w' || u === 'kw' || u === 'mw' || (unit === '' && Number.isFinite(num))) {
+      return this._powerStr(this._watts(id, NaN));   // genuine power → smart W/kW
+    }
+    if (Number.isFinite(num)) return this._dec(s.state) + (unit ? ' ' + unit : '');  // other numeric → value+own unit
+    return String(s.state);                            // text state → show as-is
+  }
   _kwhEnt(id) {
-    const v = this._num(id, NaN);
-    if (!Number.isFinite(v)) return '--';
-    const unit = this._attr(id, 'unit_of_measurement') || 'kWh';
+    const s = this._stateObj(id);
+    if (!s || s.state === 'unavailable' || s.state === 'unknown' || s.state === '') return '--';
+    if (!Number.isFinite(parseFloat(s.state))) return String(s.state);  // text state → show as-is
+    const unit = (s.attributes?.unit_of_measurement || 'kWh');
     return `${this._decEnt(id)} ${unit}`;
   }
   _cap(s) { return String(s).replace(/_/g, ' ').replace(/\b\w/g, m => m.toUpperCase()); }
@@ -1108,7 +1134,6 @@ class CasaLuna extends HTMLElement {
   /* ══════════════ BUILD (once per config) ══════════════ */
   /* component styles (static; interpolates only module geometry + scale vars) */
   _styles() {
-    const c = this.config;
     return `
       :host { display:block; }
       .stage { position:relative; width:100%; aspect-ratio:${VB_W}/${VB_H};
@@ -1235,6 +1260,13 @@ class CasaLuna extends HTMLElement {
         font-weight:600; white-space:nowrap; font-family:'Segoe UI',Roboto,'Helvetica Neue',system-ui,sans-serif; }
       .val { font-weight:700; color:#d8eeff; white-space:nowrap;
         font-family:'Segoe UI',Roboto,'Helvetica Neue',system-ui,sans-serif; }
+      /* long/unpredictable values (entity-driven totals, dual values) wrap to 2 lines
+         instead of overflowing their box or getting cut off — ellipsis only kicks in
+         if content is still too long even across 2 lines. One shared mechanism for
+         every value slot instead of per-element font-shrink fixes. */
+      .val-fit { white-space:normal; line-height:1.08;
+        display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
+        overflow-wrap:break-word; }
       .tap { cursor:pointer; transition:transform .12s, box-shadow .12s, border-color .12s; }
       .tap:hover { border-color:rgba(80,220,255,.90);
         box-shadow: inset 0 1px 0 rgba(120,210,255,.28),
@@ -1563,7 +1595,7 @@ class CasaLuna extends HTMLElement {
       </div>`;
     }).join('');
 
-    /* single master toggle: collapses/expands all 8 nav tiles together (icon-only ↔ full) */
+    /* single master toggle: collapses/expands all 9 nav tiles together (icon-only ↔ full) */
     const _navH = Math.round(SL.nav.h * 0.9);
     const _navBtmY = SL.nav.tops[SL.nav.tops.length - 1] + Math.round((SL.nav.h - _navH) / 2) + _navH + 6;
     const navToggle = `<div id="navToggle" style="left:${SL.nav.x}px;top:${_navBtmY}px;width:${SL.nav.w}px;height:20px">
@@ -1606,7 +1638,7 @@ class CasaLuna extends HTMLElement {
         style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;background:transparent;box-shadow:${glowShadow(g)}">
         <div class="lbl" style="position:absolute;left:0;top:${r1 - 7}px;width:100%;text-align:center;font-size:${Number(c.sz_tile_label) || 11}px;letter-spacing:.05em">${esc(lbl)}</div>
         <div style="position:absolute;left:0;top:${r2 - iconSz / 2}px;width:100%;display:flex;justify-content:center;align-items:center">${icon(ik, iconSz)}</div>
-        <div class="val" id="v_${id}" style="position:absolute;left:0;top:${r3 - 11}px;width:100%;text-align:center;font-size:${Number(c.sz_tile_value) || 21}px">--</div>
+        <div class="val val-fit" id="v_${id}" style="position:absolute;left:0;top:${r3 - 11}px;width:100%;text-align:center;font-size:${Number(c.sz_tile_value) || 21}px;padding:0 4px">--</div>
       </div>`;
     }).join('') +
     (() => {
@@ -1617,9 +1649,9 @@ class CasaLuna extends HTMLElement {
         <div class="lbl" style="position:absolute;left:0;top:${r1 - 7}px;width:100%;text-align:center;font-size:${Number(c.sz_tile_label) || 11}px;letter-spacing:.05em">${c.label_chg_dis ? esc(c.label_chg_dis) : 'CHG <span style="color:#7fa3c4">/ DIS</span>'}</div>
         <div style="position:absolute;left:0;top:${r2 - iconSz / 2}px;width:100%;display:flex;justify-content:center;align-items:center">${icon('batt', iconSz)}</div>
         <div style="position:absolute;left:0;top:${r3 - 11}px;width:100%;display:flex;justify-content:center;align-items:center;gap:6px">
-          <div class="val" id="v_bchg" style="font-size:${Math.round((Number(c.sz_tile_value) || 21) * 0.86)}px;color:#7ce05a">--</div>
+          <div class="val val-fit" id="v_bchg" style="font-size:${Math.round((Number(c.sz_tile_value) || 21) * 0.68)}px;color:#7ce05a;max-width:45%;text-align:center">--</div>
           <div style="width:1px;height:16px;background:rgba(100,180,255,.35);flex-shrink:0"></div>
-          <div class="val" id="v_bdis" style="font-size:${Math.round((Number(c.sz_tile_value) || 21) * 0.86)}px;color:#ffb45a">--</div>
+          <div class="val val-fit" id="v_bdis" style="font-size:${Math.round((Number(c.sz_tile_value) || 21) * 0.68)}px;color:#ffb45a;max-width:45%;text-align:center">--</div>
         </div>
       </div>`;
     })();
@@ -1628,6 +1660,14 @@ class CasaLuna extends HTMLElement {
     const SC = SL.stat_cont;
     const IB = SL.inv_box, IR = SL.inv_right, DC = SL.donut_c;
     const statCont = `<div class="box" style="left:${SC[0]}px;top:${SC[1]}px;width:${SC[2]}px;height:${SC[3]}px;background:var(--cl-box-bg,rgba(0,0,0,.35))"></div>`;
+    /* when the phase tile is hidden, the GOODWE box widens to absorb the vacated
+       space instead of leaving a dead empty hole beside it. shift = how far the
+       box's left edge moved; existing content (donut, labels) gets the same
+       offset added so it stays anchored at its original screen position rather
+       than jumping. */
+    const irX = c._show_phase ? IR[0] : IB[0];
+    const irShift = IR[0] - irX;
+    const irW = IR[2] + irShift;
     const lower = `
     <div class="box flipcard" id="phaseFlip" style="left:${IB[0]}px;top:${IB[1]}px;width:${IB[2]}px;height:${IB[3]}px;background:var(--cl-box-bg,rgba(0,0,0,.35));perspective:800px;${c._show_phase ? "" : "display:none"}">
       <div class="flipinner" id="phaseFlipInner" style="position:absolute;inset:0;transition:transform .5s;transform-style:preserve-3d">
@@ -1651,8 +1691,16 @@ class CasaLuna extends HTMLElement {
         </div>
       </div>
     </div>
-    <div class="box" style="left:${IR[0]}px;top:${IR[1]}px;width:${IR[2]}px;height:${IR[3]}px;background:var(--cl-box-bg,rgba(0,0,0,.35))">
-      <svg style="position:absolute;left:${DC[0]-IR[0]-10}px;top:${(IR[3]-115)/2}px;width:115px;height:115px" viewBox="0 0 115 115">
+    <div class="box" style="left:${irX}px;top:${IR[1]}px;width:${irW}px;height:${IR[3]}px;background:var(--cl-box-bg,rgba(0,0,0,.35))">
+      ${!c._show_phase ? `
+      <div style="position:absolute;left:10px;top:10px;width:${irShift - 20}px;height:${IR[3] - 20}px;border-radius:10px;
+        background:rgba(20,40,70,.5);border:1px solid rgba(150,200,255,.25);padding:9px 11px;box-sizing:border-box;overflow:hidden">
+        <div style="font-size:9.5px;color:#7fa3c4;letter-spacing:.05em">☰ ${this._t('EMS MODE')}</div>
+        <div class="val val-fit" id="goodweEmsVal" style="font-size:18px;font-weight:800;color:#39d353;margin-top:6px">--</div>
+        <div style="font-size:9px;color:#6f8aa6;letter-spacing:.04em;margin-top:8px">${this._t('OPERATION')}</div>
+        <div class="val val-fit" id="goodweOpVal" style="font-size:12px;font-weight:650;color:#a8cae6;margin-top:2px">--</div>
+      </div>` : ''}
+      <svg style="position:absolute;left:${DC[0]-irX-10}px;top:${(IR[3]-115)/2}px;width:115px;height:115px" viewBox="0 0 115 115">
         ${(() => {
           const cx = 57.5, cy = 57.5, r = 44, sw = 6.1;
           const nBlk = 6, gapDeg = 12;
@@ -1674,8 +1722,8 @@ class CasaLuna extends HTMLElement {
         <text x="57.5" y="48" font-size="14" fill="#a8cae6" text-anchor="middle">${this._t("INV LOAD")}</text>
         <text id="donutPct" x="57.5" y="80" font-size="${Number(c.sz_invload)||22}" font-weight="800" fill="#eaf4ff" text-anchor="middle">--%</text>
       </svg>
-      <div class="val" style="position:absolute;left:14px;top:10px;font-size:10px">${esc(c.inverter_name || 'GOODWE')}</div>
-      <div style="position:absolute;left:14px;bottom:6px;width:162px;display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <div class="val" style="position:absolute;left:${14+irShift}px;top:10px;font-size:10px">${esc(c.inverter_name || 'GOODWE')}</div>
+      <div style="position:absolute;left:${14+irShift}px;bottom:6px;width:162px;display:flex;justify-content:space-between;align-items:baseline;gap:8px">
         <span id="invStatus" style="font-size:11px;color:#a8cae6;white-space:nowrap">--</span>
         <span id="invErr" style="font-size:11px;color:#46e05a;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
       </div>
@@ -1698,39 +1746,9 @@ class CasaLuna extends HTMLElement {
       return `<div class="box${ent ? ' tap' : ''}" ${ent ? `data-entity="${esc(ent)}"` : ''} style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">
         <div class="lbl" id="itLbl${k}" style="position:absolute;left:4px;right:4px;top:${row1-7}px;text-align:center;font-size:11px;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(td.label)}</div>
         <div style="position:absolute;left:0;top:${row2-iconSz/2}px;width:100%;display:flex;justify-content:center;align-items:center">${icon(td.ik, iconSz)}</div>
-        <div class="val" id="${td.id}" style="position:absolute;left:0;top:${row3-9}px;width:100%;text-align:center;font-size:${Number(c.sz_totals_value)||16}px;color:${td.col}">--</div>
+        <div class="val val-fit" id="${td.id}" style="position:absolute;left:0;top:${row3-9}px;width:100%;text-align:center;font-size:${Number(c.sz_totals_value)||16}px;color:${td.col};padding:0 4px">--</div>
       </div>`;
     }).join('');
-
-    /* right column */
-
-    const ebox = (idp, [x, y, w, h], title, cells, col) => {
-      col = col || (idp === 'pr' ? '#7ce05a' : '#46bcff');
-      const compact = h < 115;            // short box: chart only
-      const chartH = compact ? (h - 40) : 42;
-      let body;
-      if (compact) {
-        body = `<div class="well" style="left:12px;top:32px;width:${w - 24}px;height:${chartH}px"></div>
-          <svg id="${idp}Chart" style="position:absolute;left:12px;top:32px;width:${w - 24}px;height:${chartH}px">
-            <path fill="none" stroke="${col}" stroke-width="2"/></svg>`;
-      } else {
-        const tblTop = 80, cw = w / 2, chh = (h - tblTop) / 2;
-        const cellTxt = cells.map((cl, i) => {
-          const cx = (i % 2) * cw, cy = tblTop + Math.floor(i / 2) * chh;
-          return `<div style="position:absolute;left:${cx + 14}px;top:${cy + 6}px;font-size:9px;color:#a8cae6;letter-spacing:.04em">${esc(cl[0])}</div>
-            <div id="${idp}c${i}" style="position:absolute;left:${cx + 14}px;top:${cy + 17}px;font-size:13px;font-weight:700;color:${cl[1]}">--</div>`;
-        }).join('');
-        const dividers = `<div style="position:absolute;left:${w / 2}px;top:${tblTop + 6}px;width:1px;height:${(h - tblTop) - 12}px;background:rgba(150,195,255,.18)"></div>
-          <div style="position:absolute;left:14px;top:${tblTop + chh}px;width:${w - 28}px;height:1px;background:rgba(150,195,255,.18)"></div>`;
-        body = `<div class="well" style="left:12px;top:32px;width:${w - 24}px;height:42px"></div>
-          <svg id="${idp}Chart" style="position:absolute;left:12px;top:32px;width:${w - 24}px;height:42px">
-            <path fill="none" stroke="${col}" stroke-width="2"/></svg>${dividers}${cellTxt}`;
-      }
-      return `<div class="box" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">
-        <div class="val" style="position:absolute;left:14px;top:10px;font-size:14px">${title}</div>
-        <div class="val" id="${idp}Total" style="position:absolute;right:14px;top:10px;font-size:${Number(c.sz_prodcons_total)||15}px;color:${col}">--</div>
-        ${body}</div>`;
-    };
 
     /* —— production box: chart + 2 inline rows (PV PWR / PV VOLT), dynamic string count —— */
     /* ── collapsible tile: front layer (existing content + a small "collapse"
@@ -1750,7 +1768,7 @@ class CasaLuna extends HTMLElement {
       const col = '#7ce05a';
       const chartH = h - 38;
       const front = `<div class="val" style="position:absolute;left:14px;top:10px;font-size:14px">${c.label_today_production || this._t("TODAY'S PRODUCTION")}</div>
-        <div class="val" id="prTotal" style="position:absolute;right:14px;top:10px;font-size:${Number(c.sz_prodcons_total)||15}px;color:${col}">--</div>
+        <div class="val val-fit" id="prTotal" style="position:absolute;right:14px;top:10px;max-width:150px;text-align:right;font-size:${Number(c.sz_prodcons_total)||15}px;color:${col}">--</div>
         <div class="well" style="position:absolute;left:12px;top:32px;width:${w - 24}px;height:${chartH}px"></div>
         <svg id="prChart" style="position:absolute;left:12px;top:32px;width:${w - 24}px;height:${chartH}px">
           <defs><linearGradient id="prFillGrad" x1="0" y1="0" x2="0" y2="1">
@@ -1793,7 +1811,7 @@ class CasaLuna extends HTMLElement {
       const col = '#46bcff';
       const chartH = h - 38;
       const front = `<div class="val" style="position:absolute;left:14px;top:10px;font-size:14px">${c.label_today_consumption || this._t("TODAY'S CONSUMPTION")}</div>
-        <div class="val" id="cnTotal" style="position:absolute;right:14px;top:10px;font-size:${Number(c.sz_prodcons_total)||15}px;color:${col}">--</div>
+        <div class="val val-fit" id="cnTotal" style="position:absolute;right:14px;top:10px;max-width:150px;text-align:right;font-size:${Number(c.sz_prodcons_total)||15}px;color:${col}">--</div>
         <div class="well" style="position:absolute;left:12px;top:32px;width:${w-24}px;height:${chartH}px"></div>
         <svg id="cnChart" style="position:absolute;left:12px;top:32px;width:${w-24}px;height:${chartH}px">
           <defs><linearGradient id="cnFillGrad" x1="0" y1="0" x2="0" y2="1">
@@ -1828,7 +1846,7 @@ class CasaLuna extends HTMLElement {
         style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">
         <div id="btIcon${n}" style="position:absolute;left:8px;top:10px;width:46px;height:${h - 20}px;display:flex;align-items:center;justify-content:center">${iconHtml}</div>
         <div class="val" id="btLbl${n}" style="position:absolute;left:60px;right:8px;top:13px;font-size:${Number(c.sz_bottile_label)||12}px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(lbl).toUpperCase()}</div>
-        <div class="val" id="bt${n}" style="position:absolute;left:60px;top:35px;font-size:${Number(c.sz_bottile_value)||15}px;color:#7fd4ff">--</div>
+        <div class="val val-fit" id="bt${n}" style="position:absolute;left:60px;right:8px;top:35px;font-size:${Number(c.sz_bottile_value)||15}px;color:#7fd4ff">--</div>
       </div>`;
     }).join('');
 
@@ -1984,7 +2002,6 @@ class CasaLuna extends HTMLElement {
     const H_DASH = 13.5, H_GAP = 6, H_CYC = H_DASH + H_GAP;  // 19.5
     const V_DASH = 4,    V_GAP = 6, V_CYC = V_DASH + V_GAP;  // 10
     const CR     = 15;
-    const V_LEN  = 4 * V_CYC;   // 40 (4 V-dots)
     const BATT_Y = A_Y + 10;    // battery flow line pulled down 10px
     const POLE_Y = A_Y + 45;    // grid flow line (pulled down 45px)
 
@@ -2119,18 +2136,20 @@ class CasaLuna extends HTMLElement {
     /* EV banner — proper tile below Today's Consumption (W/A/SOC/ETA). Shown only when EV enabled. */
     const [evx, evy, evw, evh] = SL.r_ev;
     const evFront = `
-        <div style="display:grid;grid-template-columns:auto repeat(4,1fr);align-items:center;
+        <div style="display:grid;grid-template-columns:auto repeat(5,1fr);align-items:center;
         position:absolute;inset:0;padding:5px 14px;box-sizing:border-box;column-gap:6px">
         <div style="grid-row:1;font-size:12px;font-weight:700;color:#cfeaff;letter-spacing:.06em">EV</div>
         <div style="grid-row:1;text-align:center;font-size:9px;color:rgba(255,255,255,.55);letter-spacing:.5px">W</div>
         <div style="grid-row:1;text-align:center;font-size:9px;color:rgba(255,255,255,.55);letter-spacing:.5px">A</div>
         <div style="grid-row:1;text-align:center;font-size:9px;color:rgba(255,255,255,.55);letter-spacing:.5px">SOC</div>
         <div style="grid-row:1;text-align:center;font-size:9px;color:rgba(255,255,255,.55);letter-spacing:.5px">ETA</div>
+        <div style="grid-row:1;text-align:center;font-size:9px;color:rgba(255,255,255,.55);letter-spacing:.5px">STATE</div>
         <div style="grid-row:2"></div>
         <div id="evPowerVal"   style="grid-row:2;text-align:center;font-size:14px;font-weight:650;color:#00aaff">--</div>
         <div id="evCurrentVal" style="grid-row:2;text-align:center;font-size:14px;font-weight:650;color:#88ccff">--</div>
         <div id="evSocVal"     style="grid-row:2;text-align:center;font-size:14px;font-weight:650;color:#4ade80">--</div>
         <div id="evEtaVal"     style="grid-row:2;text-align:center;font-size:14px;font-weight:650;color:#4ade80">--</div>
+        <div class="val-fit" id="evStateVal" style="grid-row:2;text-align:center;font-size:10.5px;font-weight:650;color:#ffd24a">--</div>
         </div>`;
     const evBanner = c._show_ev ? `
       <div class="box collapsible" id="evBanner" data-collapse-id="ev" style="left:${evx}px;top:${evy}px;width:${evw}px;height:${evh}px;
@@ -2319,7 +2338,7 @@ class CasaLuna extends HTMLElement {
   }
 
   _battFill(soc) {
-    const ft=135, fb=268, fh=133;
+    const fb=268, fh=133;
     const fH = Math.round((soc||0)/100*fh), fY = fb-fH;
     let c, f, tc;
     const thresh_critical = Number(this.config?.thresh_soc_critical) || 15;
@@ -2744,6 +2763,7 @@ class CasaLuna extends HTMLElement {
     if (view === 'dashboard') return;
     const inner = this._q('#detailInner');
     const meta = NAV_VIEWS.find(v => v[0] === view);
+    if (!meta) { this._closeView(); return; }   // unknown view → close panel rather than crash on meta[1]
     /* per-view rich builders; fall back to the generic entity list for views not yet built */
     const builders = {
       security: () => this._viewSecurity(),
@@ -2872,14 +2892,14 @@ class CasaLuna extends HTMLElement {
     }
     const grp = (head, body) => body ? this._wHead(head) + body : '';
     const safety = [
-      c.sec_flame      && this._wTile('🔥', c.sec_flame_name      || 'Flame', c.sec_flame),
-      c.sec_gas_analog && this._wTile('💨', c.sec_gas_analog_name || 'Gas', c.sec_gas_analog),
-      c.sec_gas_digital&& this._wTile('🔔', c.sec_gas_digital_name|| 'Gas Alert', c.sec_gas_digital),
-      c.sec_motion     && this._wTile('🚶', c.sec_motion_name     || 'Motion', c.sec_motion),
+      c.sec_flame      && this._wTile('🔥', c.sec_flame_name      || this._name(c.sec_flame), c.sec_flame),
+      c.sec_gas_analog && this._wTile('💨', c.sec_gas_analog_name || this._name(c.sec_gas_analog), c.sec_gas_analog),
+      c.sec_gas_digital&& this._wTile('🔔', c.sec_gas_digital_name|| this._name(c.sec_gas_digital), c.sec_gas_digital),
+      c.sec_motion     && this._wTile('🚶', c.sec_motion_name     || this._name(c.sec_motion), c.sec_motion),
     ].filter(Boolean).join('');
     const doors = [
-      c.sec_door1   && this._wTile('🚪', c.sec_door1_name   || 'Front Door', c.sec_door1),
-      c.sec_window1 && this._wTile('🪟', c.sec_window1_name || 'Window', c.sec_window1),
+      c.sec_door1   && this._wTile('🚪', c.sec_door1_name   || this._name(c.sec_door1), c.sec_door1),
+      c.sec_window1 && this._wTile('🪟', c.sec_window1_name || this._name(c.sec_window1), c.sec_window1),
     ].filter(Boolean).join('');
     const extra = [1, 2, 3, 4, 5, 6].map(n => {
       const id = c[`sec_extra_${n}_entity`];
@@ -2917,16 +2937,16 @@ class CasaLuna extends HTMLElement {
     }
     /* manual: only render tiles whose entity is set; drop empty groups entirely */
     const grp = (head, body) => body ? this._wHead(head) + body : '';
-    const ac = (c.clim_ac || '') ? this._wClimate(c.clim_ac_name || 'AC', c.clim_ac) : '';
+    const ac = (c.clim_ac || '') ? this._wClimate(c.clim_ac_name || this._name(c.clim_ac), c.clim_ac) : '';
     const fridge = [
-      c.clim_fridge_temp  && this._wTile('🌡️', c.clim_fridge_temp_name  || 'Fridge', c.clim_fridge_temp, '°C'),
-      c.clim_fridge_door  && this._wTile('🚪', c.clim_fridge_door_name  || 'Door',   c.clim_fridge_door),
-      c.clim_fridge_power && this._wTile('🔌', c.clim_fridge_power_name || 'Power',  c.clim_fridge_power, 'W', true),
+      c.clim_fridge_temp  && this._wTile('🌡️', c.clim_fridge_temp_name  || this._name(c.clim_fridge_temp), c.clim_fridge_temp, '°C'),
+      c.clim_fridge_door  && this._wTile('🚪', c.clim_fridge_door_name  || this._name(c.clim_fridge_door), c.clim_fridge_door),
+      c.clim_fridge_power && this._wTile('🔌', c.clim_fridge_power_name || this._name(c.clim_fridge_power), c.clim_fridge_power, 'W', true),
     ].filter(Boolean).join('');
     const ambient = [
-      c.clim_ambient  && this._wTile('🌡️', c.clim_ambient_name  || 'Room',     c.clim_ambient, '°C'),
-      c.clim_humidity && this._wTile('💧', c.clim_humidity_name || 'Humidity', c.clim_humidity, '%'),
-      c.clim_lux      && this._wTile('💡', c.clim_lux_name      || 'Lux',      c.clim_lux, 'lx'),
+      c.clim_ambient  && this._wTile('🌡️', c.clim_ambient_name  || this._name(c.clim_ambient), c.clim_ambient, '°C'),
+      c.clim_humidity && this._wTile('💧', c.clim_humidity_name || this._name(c.clim_humidity), c.clim_humidity, '%'),
+      c.clim_lux      && this._wTile('💡', c.clim_lux_name      || this._name(c.clim_lux), c.clim_lux, 'lx'),
     ].filter(Boolean).join('');
     const extra = [1, 2, 3, 4, 5, 6].map(n => {
       const id = c[`clim_extra_${n}_entity`];
@@ -2947,14 +2967,19 @@ class CasaLuna extends HTMLElement {
   /* ── ENERGY view: monitoring + GoodWe inverter controls (from config) ── */
   _viewEnergy() {
     const c = this.config;
+    /* Same inheritance pattern as _viewBattery's bf(): if the Energy View's own en_*
+       field isn't set (or its entity doesn't exist in this HA), fall back to the main
+       dashboard's equivalent — so this view mirrors it automatically instead of asking
+       for the same entity twice. */
+    const bf = (enKey, mainKey) => (c[enKey] && this._stateObj(c[enKey])) ? c[enKey] : (c[mainKey] || '');
     return this._wHead('Live Power')
       + this._wGrid(4,
-        this._wTile('☀️', 'PV1', c.en_pv1 || '', 'W', true)
-        + this._wTile('☀️', 'PV2', c.en_pv2 || '', 'W', true)
-        + this._wTile('🏭', 'Grid', c.en_grid_power || '', 'W', true)
-        + this._wTile('🏠', 'Load', c.en_load || '', 'W', true)
+        this._wTile('☀️', 'PV1', bf('en_pv1', 'pv1_power'), 'W', true)
+        + this._wTile('☀️', 'PV2', bf('en_pv2', 'pv2_power'), 'W', true)
+        + this._wTile('🏭', 'Grid', bf('en_grid_power', 'grid_active_power'), 'W', true)
+        + this._wTile('🏠', 'Load', bf('en_load', 'consump'), 'W', true)
         + this._wTile('🔋', 'Backup', c.en_backup || '', 'W', true)
-        + this._wTile('⚙️', 'Mode', c.en_work_mode || ''))
+        + this._wTile('⚙️', 'Mode', bf('en_work_mode', 'inverter_state')))
       + this._wHead('Inverter Controls')
       + this._wGrid(3,
         this._wToggleTile('🔋', 'Backup', c.en_backup_supply || '')
@@ -3044,10 +3069,10 @@ class CasaLuna extends HTMLElement {
       ])
       + this._wHead('Relays')
       + this._wGrid(4,
-        this._wToggleTile('1️⃣', c.auto_relay1_name || 'Relay 1', c.auto_relay1 || '')
-        + this._wToggleTile('2️⃣', c.auto_relay2_name || 'Relay 2', c.auto_relay2 || '')
-        + this._wToggleTile('3️⃣', c.auto_relay3_name || 'Relay 3', c.auto_relay3 || '')
-        + this._wToggleTile('4️⃣', c.auto_relay4_name || 'Relay 4', c.auto_relay4 || ''))
+        this._wToggleTile('1️⃣', c.auto_relay1_name || (c.auto_relay1 ? this._name(c.auto_relay1) : 'Relay 1'), c.auto_relay1 || '')
+        + this._wToggleTile('2️⃣', c.auto_relay2_name || (c.auto_relay2 ? this._name(c.auto_relay2) : 'Relay 2'), c.auto_relay2 || '')
+        + this._wToggleTile('3️⃣', c.auto_relay3_name || (c.auto_relay3 ? this._name(c.auto_relay3) : 'Relay 3'), c.auto_relay3 || '')
+        + this._wToggleTile('4️⃣', c.auto_relay4_name || (c.auto_relay4 ? this._name(c.auto_relay4) : 'Relay 4'), c.auto_relay4 || ''))
       + (() => {
           const ex = [1, 2, 3, 4, 5, 6].map(n => {
             const id = c[`auto_extra_${n}_entity`];
@@ -3093,10 +3118,10 @@ class CasaLuna extends HTMLElement {
     }
     const grp = (head, body) => body ? this._wHead(head) + body : '';
     const lights = [
-      c.light1       && this._wLight(c.light1_name       || 'Living Room', c.light1),
-      c.light2       && this._wLight(c.light2_name       || 'Bedroom', c.light2),
-      c.light3       && this._wLight(c.light3_name       || 'Kitchen', c.light3),
-      c.light_zigbee && this._wLight(c.light_zigbee_name || 'Zigbee Light', c.light_zigbee),
+      c.light1       && this._wLight(c.light1_name       || this._name(c.light1), c.light1),
+      c.light2       && this._wLight(c.light2_name       || this._name(c.light2), c.light2),
+      c.light3       && this._wLight(c.light3_name       || this._name(c.light3), c.light3),
+      c.light_zigbee && this._wLight(c.light_zigbee_name || this._name(c.light_zigbee), c.light_zigbee),
       ...[1, 2, 3, 4, 5, 6].map(n => {
         const id = c[`light_extra_${n}_entity`];
         return id ? this._wLight(c[`light_extra_${n}_name`] || this._name(id), id) : '';
@@ -3114,16 +3139,18 @@ class CasaLuna extends HTMLElement {
   /* ── SYSTEM view: server, ESP board, device status, temps ── */
   _viewSystem() {
     const c = this.config;
+    /* same inheritance pattern as _viewBattery/_viewEnergy */
+    const bf = (sysKey, mainKey) => (c[sysKey] && this._stateObj(c[sysKey])) ? c[sysKey] : (c[mainKey] || '');
     return this._wHead('Inverter & ESP')
       + this._wGrid(4,
-        this._wTile('🌡️', 'Inv Temp', c.sys_inv_temp || '', '°C')
-        + this._wTile('⚙️', 'Mode', c.sys_work_mode || '')
+        this._wTile('🌡️', 'Inv Temp', bf('sys_inv_temp', 'inv_temp'), '°C')
+        + this._wTile('⚙️', 'Mode', bf('sys_work_mode', 'inverter_state'))
         + this._wTile('📟', 'C3', c.sys_c3_status || '')
         + this._wTile('🌡️', 'Board', c.sys_board_temp || '', '°C')
         + this._wTile('💨', 'Gas', c.sys_gas || '', 'ppm')
         + this._wTile('💡', 'Lux', c.sys_lux || '', 'lx')
         + this._wTile('📶', 'WiFi', c.sys_wifi || '', 'dBm')
-        + this._wTile('🔌', 'Grid kWh', c.sys_grid_meter || ''))
+        + this._wTile('🔌', 'Grid kWh', bf('sys_grid_meter', 'grid_active_power')))
       + this._wHead('Server')
       + this._wGrid(4,
         this._wTile('💾', 'CPU', c.sys_cpu || '', '%')
@@ -3218,7 +3245,7 @@ class CasaLuna extends HTMLElement {
     box.style.left = (collapsed ? (origLeft + origWidth - TABW) : origLeft) + 'px';
   }
 
-  /* ── left nav rail: one master toggle collapses ALL 8 tiles together to
+  /* ── left nav rail: one master toggle collapses ALL 9 tiles together to
      icon-only width, or restores full icon+label width. Left edge stays
      fixed (mirrors the right-column tiles, which anchor their right edge). ── */
   _setNavCompact(folded) {
@@ -3882,7 +3909,7 @@ class CasaLuna extends HTMLElement {
        Magnitude only (direction/colour handled in _updateFlows from the same net). */
     const hasPhases = !!(c.grid_phase_a || c.grid_phase_b || c.grid_phase_c);
     const gridFlowW = Math.abs(this._gridNetW());
-    this._setTxt('#gridW', `${this._dec(gridFlowW / 1000)} kW`);
+    this._setTxt('#gridW', gridFlowW >= 1000 ? `${this._dec(gridFlowW / 1000)} kW` : `${Math.round(gridFlowW)} W`);
     /* Battery flow-line top value now = battery POWER, colored to match flow (set in flow block below) */
     /* Below-line volts: grid volt (hidden when 3-phase on), battery volt (always shown) */
     const gridVoltEl = this._qi('gridVolt');
@@ -3910,15 +3937,24 @@ class CasaLuna extends HTMLElement {
       this._setTxt('#evSocVal', Number.isFinite(evS) ? `${Math.round(evS)}%` : '--');
       const eta = c.charger_eta && this._hass?.states?.[c.charger_eta];
       this._setTxt('#evEtaVal', eta ? String(eta.state) : '--');
+      const stSo = this._stateObj(c.charger_state);
+      this._setTxt('#evStateVal', stSo ? (this._hass?.formatEntityState?.(stSo) ?? this._cap(stSo.state)) : '--');
     }
     this._fillBar('pv', pvW / Math.max(c.pv_max_power, 1), '#43ea13', 10);
     this._fillBar('pwr', loadW / Math.max(c.inverter_max_power, 1), '#0a8aea', 10);
 
+    /* GOODWE box EMS/Operation mode card — only present when phase tile is hidden
+       (the freed-space card). Reuses Energy View's already-configured entities. */
+    if (!c._show_phase) {
+      const emsSo = this._stateObj(c.en_ems_mode);
+      this._setTxt('#goodweEmsVal', emsSo ? (this._hass?.formatEntityState?.(emsSo) ?? this._cap(emsSo.state)) : '--');
+      const opSo = this._stateObj(c.en_op_mode);
+      this._setTxt('#goodweOpVal', opSo ? (this._hass?.formatEntityState?.(opSo) ?? this._cap(opSo.state)) : '--');
+    }
+
     /* stat tiles */
     const loadRaw = this._num(c.consump, NaN);
     const tempColor = v => v >= c.thresh_temp_critical ? '#ff5040' : v >= c.thresh_temp_warn ? '#ffaa28' : '#46e05a';
-    /* GoodWe cell-temp quirk: raw reports 3.9 for 39°C. Auto-correct ×10 only when
-       the entity id contains "goodwe"; any other system shows the raw value. */
     const cellTemp = (entId) => {
       let v = this._num(entId, NaN);
       /* some BMS/inverter integrations report cell temp in tenths of a degree;
@@ -3932,9 +3968,7 @@ class CasaLuna extends HTMLElement {
       if (!c.consump || !Number.isFinite(loadRaw)) {
         loadEl2.textContent = '--';
       } else {
-        const unit = (this._attr(c.consump, 'unit_of_measurement') || '').trim().toLowerCase();
-        const kwVal = unit === 'kw' ? loadRaw : loadRaw / 1000;
-        loadEl2.textContent = `${this._dec(kwVal)} kW`;
+        loadEl2.textContent = this._powerEnt(c.consump);
       }
       loadEl2.style.color = '#50c8ff';
     }
@@ -4077,7 +4111,6 @@ class CasaLuna extends HTMLElement {
       const sev = Math.max(cellVColor(mn) || 0, cellVColor(mx) || 0);
       this._setColor('#bCv', sev === 3 ? '#ff5040' : sev === 2 ? '#ffaa28' : sev === 1 ? '#7ce05a' : '#7ce05a');
     }
-    const chgSum = this._num(c.today_batt_chg, NaN);
     /* Endurance (khan logic): driven by battery power, not house load.
        Discharging → time to empty; Charging → ETA to full (cyan, labeled ETA).
        casa-luna sign: bP>0 discharging, bP<0 charging (already invert-normalized). */
@@ -4105,8 +4138,6 @@ class CasaLuna extends HTMLElement {
     this._setTxt('#bE', endText);
     this._setColor('#bE', isETA ? '#00d7ff' : '#d8eeff');
     const bELbl = this._q('#bELbl'); if (bELbl) bELbl.textContent = isETA ? 'ETA' : (c.label_endurance || 'Endurance');
-    /* mirror condensed values to battery flip back face */
-    const _mirror = (src, dst) => { const s = this._q(src), d = this._q(dst); if (s && d) { d.textContent = s.textContent; d.style.color = s.style.color || '#d8eeff'; } };
     /* battery back face now shows PV strings (filled below) */
 
     /* production / consumption boxes */
@@ -4120,21 +4151,21 @@ class CasaLuna extends HTMLElement {
     for (let i = 0; i < pvSlots; i++) {
       const pEnt = pvP[i], vEnt = pvV[i];
       const pEl = this._q(`#prPc${i}`);
-      if (pEl) pEl.textContent = pEnt ? `${this._dec(this._watts(pEnt) / 1000)} kW` : '--';
+      if (pEl) pEl.textContent = pEnt ? this._powerEnt(pEnt) : '--';
       const vEl = this._q(`#prVc${i}`);
       if (vEl) vEl.textContent = vEnt ? `${this._decEnt(vEnt)} V` : '--';
     }
     /* battery back face: all 6 PV strings (power + volt) */
     for (let i = 0; i < 6; i++) {
       const pe = this._q(`#bPV${i + 1}P`);
-      if (pe) pe.textContent = pvP[i] ? `${this._dec(this._watts(pvP[i]) / 1000)} kW` : '--';
+      if (pe) pe.textContent = pvP[i] ? this._powerEnt(pvP[i]) : '--';
       const ve = this._q(`#bPV${i + 1}V`);
       if (ve) ve.textContent = pvV[i] ? `${this._decEnt(pvV[i])} V` : '--';
     }
     this._setTxt('#cnTotal', this._kwhEnt(c.today_load));
     /* grid imp/exp now shown in middle tiles (#v_gimp / #v_gexp) */
     /* inverter summary tiles */
-    const impTs = this._tileState('imp'), expTs = this._tileState('exp'), pvTs = this._tileState('pv');
+    const pvTs = this._tileState('pv');
     this._setTxt('#itImp', c.total_import ? this._kwhEnt(c.total_import) : '--');
     this._setTxt('#itExp', c.total_export ? this._kwhEnt(c.total_export) : '--');
     this._setTxt('#itPv',  pvTs.custom ? this._rawTile(pvTs.entity) : this._kwhEnt(c.total_pv));
@@ -4235,8 +4266,18 @@ class CasaLuna extends HTMLElement {
             let cyc = a.getAttribute('data-cyc');
             if (cyc === null) { cyc = a.getAttribute('from'); a.setAttribute('data-cyc', cyc); }
             const from = reverse ? '0' : cyc, to = reverse ? cyc : '0';
+            const dirChanged = a._clRev !== undefined && a._clRev !== reverse;
             if (a._clFrom !== from) { a.setAttribute('from', from); a._clFrom = from; }
             if (a._clTo   !== to)   { a.setAttribute('to',   to);   a._clTo   = to; }
+            a._clRev = reverse;
+            /* changing from/to on a LIVE repeatCount=indefinite SMIL animation via
+               setAttribute does not reliably restart it in Chromium — it keeps playing
+               the OLD direction until explicitly restarted. Force it only when the
+               direction actually flips, so normal ticks (same direction) don't reset
+               the animation's phase and cause visible stutter. */
+            if (dirChanged && typeof a.beginElement === 'function') {
+              try { a.beginElement(); } catch (e) { /* unsupported in some engines — color/arrow still correct */ }
+            }
           }
         });
       };
@@ -4658,7 +4699,6 @@ class CasaLuna extends HTMLElement {
     const pts = await this._fetchHistory(ent, 24 * 60);
     if (!pts || pts.length < 2) return;
     const min = Math.min(...pts), max = Math.max(...pts), span = (max - min) || 1;
-    const lineCol = linePath.getAttribute('stroke') || '#7ce05a';
     const SCALE_W = 30;            // left gutter for scale labels
     const x0 = SCALE_W + 2, plotW = w - SCALE_W - 6;
     const step = Math.max(1, Math.floor(pts.length / 60));
@@ -4697,7 +4737,6 @@ class CasaLuna extends HTMLElement {
     {
       const now = new Date();
       const hhmm = (d) => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-      const tEnd = now;
       const tMid = new Date(now.getTime() - 12 * 3600000);
       const tStart = new Date(now.getTime() - 24 * 3600000);
       const ty = h - 0.5;
@@ -5028,17 +5067,19 @@ class CasaLunaEditor extends HTMLElement {
       });
       g.appendChild(head);
 
-      /* ---- expanded body: rename + pick ---- */
+      /* ---- expanded body: optional rename + pick ---- */
       if (expanded) {
         const body = document.createElement('div'); body.className = 'erow-body';
 
-        const lf = document.createElement('div'); lf.className = 'fld';
-        const ll = document.createElement('label'); ll.textContent = 'Label';
-        const li = document.createElement('input'); li.type = 'text'; li.placeholder = defaultLabel;
-        li.value = (cfg[labelKey] !== undefined && cfg[labelKey] !== '') ? String(cfg[labelKey]) : '';
-        li.addEventListener('change', e => this._set(labelKey, e.target.value));
-        li.addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
-        lf.appendChild(ll); lf.appendChild(li); body.appendChild(lf);
+        if (labelKey) {
+          const lf = document.createElement('div'); lf.className = 'fld';
+          const ll = document.createElement('label'); ll.textContent = 'Label';
+          const li = document.createElement('input'); li.type = 'text'; li.placeholder = defaultLabel;
+          li.value = (cfg[labelKey] !== undefined && cfg[labelKey] !== '') ? String(cfg[labelKey]) : '';
+          li.addEventListener('change', e => this._set(labelKey, e.target.value));
+          li.addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+          lf.appendChild(ll); lf.appendChild(li); body.appendChild(lf);
+        }
 
         const pl = document.createElement('div'); pl.className = 'lblrow'; pl.style.margin = '0 2px 3px';
         pl.textContent = 'Entity';
@@ -5054,8 +5095,14 @@ class CasaLunaEditor extends HTMLElement {
     };
 
     /* ═══ SECTIONS ═══ */
-    /* eg(entityKey, defaultLabel) → tap-to-expand entity row with conventional label_ key */
+    /* eg(entityKey, defaultLabel) → tap-to-expand entity row, picker only.
+       egL(...) → same, PLUS a Label rename input — use only for captions the card's
+       render code actually reads back (label_<entityKey>). Most captions are fixed
+       template text, not config-driven, so a rename input for them would save to
+       config and silently do nothing — eg() now defaults to not offering it. */
     const eg = (entityKey, defaultLabel) =>
+      entityRow(entityKey, defaultLabel, null);
+    const egL = (entityKey, defaultLabel) =>
       entityRow(entityKey, defaultLabel, `label_${entityKey}`);
 
     /* Battery capacity group — Ah/kWh radio + the matching plain number field.
@@ -5177,7 +5224,7 @@ class CasaLunaEditor extends HTMLElement {
       ], { sub: true }),
       divider(),
       eg('today_pv', "TODAY'S PV"),
-      eg('total_pv', 'TOTAL PV (lifetime)'),
+      egL('total_pv', 'TOTAL PV (lifetime)'),
       textField('label_today_production', "Today's Production — caption", "TODAY'S PRODUCTION"),
     ]));
 
@@ -5186,14 +5233,15 @@ class CasaLunaEditor extends HTMLElement {
       divider(),
       eg('grid_active_power', 'GRID POWER'),
       eg('grid_voltage', 'GRID VOLT'),
-      eg('grid_import_today', 'GRID IMPORT'),
-      eg('grid_export_energy', 'GRID EXPORT'),
+      info('GRID IMPORT/EXPORT = today (daily-resetting sensor). TOTAL = lifetime cumulative. These should normally be different sensors — but if your inverter only exposes one, it\'s fine to use it for both.'),
+      egL('grid_import_today', 'GRID IMPORT (today)'),
+      egL('grid_export_energy', 'GRID EXPORT (today)'),
       eg('total_import', 'TOTAL IMPORT (lifetime)'),
       eg('total_export', 'TOTAL EXPORT (lifetime)'),
       textField('label_total_imp', 'Total Import — caption', 'TOTAL IMP'),
       textField('label_total_exp', 'Total Export — caption', 'TOTAL EXP'),
       divider(),
-      eg('consump', 'LOAD'),
+      egL('consump', 'LOAD'),
       eg('today_load', "TODAY'S LOAD"),
       textField('label_today_consumption', "Today's Consumption — caption", "TODAY'S CONSUMPTION"),
     ]));
@@ -5221,7 +5269,7 @@ class CasaLunaEditor extends HTMLElement {
     ]));
 
     shell.appendChild(section('inverter', '🔄', 'Inverter Status', [
-      eg('inverter_state', 'INV STATE'),
+      egL('inverter_state', 'INV STATE'),
       eg('inv_temp', 'INVERTER TEMP'),
       eg('inverter_error', 'INVERTER ERROR'),
     ]));
@@ -5236,11 +5284,19 @@ class CasaLunaEditor extends HTMLElement {
       eg('battery_temp1', 'TEMP 1'),
       eg('battery_temp2', 'TEMP 2'),
       switchRow('cell_temp_x10', '🌡️ Cell temp ×10', 'Enable if cell temps read 10× too low (e.g. shows 3.3 instead of 33°C)'),
-      entityRow('battery_mos', 'BMS TEMP', 'label_battery_mos2'),
+      eg('battery_mos', 'BMS TEMP'),
       eg('battery_min_cell', 'MIN CELL'),
-      eg('battery_mos', 'BMS / MOS'),
       eg('battery_max_cell', 'MAX CELL'),
       divider(),
+      info('Captions for the battery stat rows shown in the MODE panel (top right of the dashboard).'),
+      textField('label_cell_temp', 'Cell Temp row — caption', 'Cell Temp'),
+      textField('label_bms_temp', 'BMS Temp row — caption', 'BMS Temp'),
+      textField('label_cell_volt', 'Cell Volt row — caption', 'Cell Volt'),
+      textField('label_batt_current', 'Battery Current row — caption', 'BATT CURRENT'),
+      textField('label_capacity', 'Capacity row — caption', 'CAPACITY'),
+      textField('label_endurance', 'Endurance row — caption', 'Endurance'),
+      divider(),
+      info('BATT CHARGE and DISCHARGE are two different sensors (energy in vs out). If one reads ~1000× the other, check that both report the same unit (Wh vs kWh) in Developer Tools.'),
       eg('today_batt_chg', 'BATT CHARGE'),
       eg('batt_dis', 'Batt Discharge'),
       textField('label_chg_dis', 'Charge/Discharge — caption', 'CHG / DIS'),
@@ -5350,7 +5406,7 @@ class CasaLunaEditor extends HTMLElement {
       numberField('sz_totals_value', 'Inverter totals — values', 8, 30, 1, 'px'),
     ]));
 
-    /* ── Per-view entity configuration (every field from the 8 nav panels) ── */
+    /* ── Per-view entity configuration (every field from the 9 nav panels) ── */
     shell.appendChild(section('nav_cameras', '📷', 'Cameras', [
       info('Pick a camera entity and it just works — streams live via Home Assistant\'s own camera proxy, no extra setup. Leave "Stream base URL" empty unless you run go2rtc.'),
       textField('camera_stream_base', 'go2rtc base URL (optional — for lower-latency WebRTC)', 'http://192.168.3.109:1984'),
