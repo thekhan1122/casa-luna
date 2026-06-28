@@ -2,7 +2,7 @@
 
 **Casa Luna — Home Assistant Solar / Off-Grid / On-Grid / Automation Wall Dashboard**
 
-`casa-luna.js` · Casa Luna Edition **v1.0.0** (build 103)
+`casa-luna.js` · Casa Luna Edition **v1.0.0** (build 105)
 
 <img width="1852" height="1262" alt="IMG_20260624_142618" src="https://github.com/user-attachments/assets/900bfb4c-a962-45f4-84a0-b1afbfd34171" />
 <img width="1880" height="1252" alt="IMG_20260624_013814" src="https://github.com/user-attachments/assets/171972f3-3463-44eb-8e62-515a2635b5c0" />
