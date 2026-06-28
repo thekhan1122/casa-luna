@@ -1,4 +1,4 @@
-// v1.0.0 stable · build no.103
+// v1.0.0 stable · build no.105
 /* ════════════════════════════════════════════════════════════════════
    casa-luna.js — Casa Luna Edition · by The Khan
    Custom element: <casa-luna>  (renamed from khan-skycard to avoid
@@ -817,13 +817,33 @@ class CasaLuna extends HTMLElement {
     this._watchedIdsCacheConfig = this.config;
     return ids;
   }
+  /* domains/device_classes that the card's auto-discovery features (Recent Events,
+     Security, Climate, Automation scenes, Lighting) can surface — these entities are
+     never explicit config values, so without this they're invisible to the dirty-check
+     above: a door opening or automation firing wouldn't change the signature, silently
+     skipping _update() and leaving those displays stale until some unrelated watched
+     entity happened to change too. */
+  static AUTODISC_DOMAINS = new Set(['automation', 'climate', 'scene', 'light']);
+  static AUTODISC_BINARY_DC = new Set(['motion', 'occupancy', 'moving', 'door', 'window', 'opening', 'garage_door', 'gas', 'smoke', 'carbon_monoxide', 'safety']);
+  static AUTODISC_SENSOR_DC = new Set(['temperature', 'humidity']);
   _entitiesSignature() {
     const states = this._hass?.states;
     if (!states) return '';
+    const watched = this._watchedEntityIds();
     let sig = '';
-    for (const id of this._watchedEntityIds()) {
+    for (const id of watched) {
       const s = states[id];
       sig += id + ':' + (s ? (s.last_updated || s.state) : '\u2205') + '|';
+    }
+    for (const id in states) {
+      if (watched.has(id)) continue;
+      const dom = id.split('.')[0];
+      const dc = states[id].attributes?.device_class;
+      if (CasaLuna.AUTODISC_DOMAINS.has(dom)
+        || (dom === 'binary_sensor' && CasaLuna.AUTODISC_BINARY_DC.has(dc))
+        || (dom === 'sensor' && CasaLuna.AUTODISC_SENSOR_DC.has(dc))) {
+        sig += id + ':' + (states[id].last_updated || states[id].state) + '|';
+      }
     }
     return sig;
   }
@@ -2776,6 +2796,10 @@ class CasaLuna extends HTMLElement {
       system: () => this._viewSystem(),
     };
     const body = builders[view] ? builders[view]() : this._viewGeneric(view, meta);
+    /* setting innerHTML always resets scrollTop to 0 - without restoring it, every
+       periodic refresh (the 15s clock, or any watched entity changing) would silently
+       snap the panel back to the top while someone's reading further down. */
+    const prevScroll = inner.scrollTop;
     inner.innerHTML = `<h3>${meta[1]}</h3><div class="dsub">${meta[2]}</div>${body}`;
     this._bindPanelWidgets(inner);
     /* generic list also needs its row binding */
@@ -2789,6 +2813,9 @@ class CasaLuna extends HTMLElement {
       });
     });
     this._fitDetailPanel();
+    /* restore AFTER _fitDetailPanel — its position:static measurement trick resets
+       scrollTop as a side effect, so restoring before it runs gets clobbered. */
+    inner.scrollTop = prevScroll;
   }
 
   /* Size #detailPanel to fit THIS view's actual content instead of a constant height.
